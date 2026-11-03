@@ -92,7 +92,7 @@ cd "libandroid-shmem-${SHMEM_VERSION}"
 # Bionic's <paths.h> has no _PATH_TMP. Named SysV keys are not used in
 # Phase 1; the glibc default only satisfies the compile-time reference.
 make CC="$CC" \
-    CFLAGS="-fpic -std=c11 -Wall -Wextra -O2 -D_PATH_TMP=\"/tmp/\"" \
+    CFLAGS="-fpic -std=c11 -Wall -Wextra -O2 -D_PATH_TMP='\"/tmp/\"'" \
     LDFLAGS="-Wl,--version-script=exports.txt -Wl,-z,max-page-size=${PAGE_SIZE} -Wl,-z,common-page-size=${PAGE_SIZE}" \
     libandroid-shmem.so
 make install DESTDIR="$WORK/shmem-prefix" PREFIX=/usr
@@ -105,7 +105,7 @@ fetch "https://github.com/termux/proot/archive/v${PROOT_VERSION}.tar.gz" \
 tar xf proot.tar.gz
 cd "proot-${PROOT_VERSION}"
 export CC AR RANLIB STRIP
-export CPPFLAGS="-DARG_MAX=131072 -DVERSION=\"${PROOT_VERSION}\" -I$WORK/talloc-prefix/include -I$WORK/shmem-prefix/usr/include"
+export CPPFLAGS="-DARG_MAX=131072 -DVERSION='\"${PROOT_VERSION}\"' -I$WORK/talloc-prefix/include -I$WORK/shmem-prefix/usr/include"
 export CFLAGS="-O2"
 export LDFLAGS="-L$WORK/talloc-prefix/lib -L$WORK/shmem-prefix/usr/lib -Wl,-z,max-page-size=${PAGE_SIZE} -Wl,-z,common-page-size=${PAGE_SIZE}"
 export LOADER_LDFLAGS="-Wl,-z,max-page-size=${PAGE_SIZE} -Wl,-z,common-page-size=${PAGE_SIZE}"
