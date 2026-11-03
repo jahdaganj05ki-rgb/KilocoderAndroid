@@ -3,7 +3,9 @@
 Seit M1.2 baut der Android-Workflow PRoot selbst. `build-proot.sh` läuft vor
 Gradle, ersetzt die vier Debug-Bibliotheken in
 `app/src/debug/jniLibs/arm64-v8a/` und bricht ab, wenn eine davon nicht
-16-KB-ausgerichtet ist.
+16-KB-ausgerichtet ist. Der M1.1-Smoke-Test bestand mit diesem Build am
+2026-11-03 auf dem Moto G84 12 von 12 Prüfungen; auf dem Gerät meldeten alle
+vier Bibliotheken `align=0x4000`.
 
 ## Warum
 

@@ -502,9 +502,9 @@ Status: **abgeschlossen am 2026-11-03**. Alle Festlegungen stehen in [PHASE1_M1_
 
 ### M1.1 — PRoot-Smoke-Test (2–3 Tage)
 
-Status: **GO am 2026-11-03 auf dem Moto G84.** Der Lauf mit `0.1.18` bestand 12 von 12 Prüfungen (Android 15/API 35, `targetSdk 36`, PAGE_SIZE 4096), inklusive Guest-Exec, Exit-Code, Abbruch und `java -version`. Die 16-KB-Prüfung ist statisch; ein 16-KB-Lauf bleibt Phase 2. Ablauf und Fehlerbilder stehen in [PHASE1_M1_1_RUNBOOK.md](PHASE1_M1_1_RUNBOOK.md).
+Status: **GO am 2026-11-03 auf dem Moto G84.** Der Lauf mit `0.1.18` bestand 12 von 12 Prüfungen (Android 15/API 35, `targetSdk 36`, PAGE_SIZE 4096), inklusive Guest-Exec, Exit-Code, Abbruch und `java -version`. Ein zweiter Lauf mit dem eigenen NDK-r28-Build bestand ebenfalls 12 von 12; der ELF-Check auf dem Gerät meldete für alle vier Bibliotheken `align=0x4000`. Die 16-KB-Prüfung ist statisch; ein 16-KB-Lauf bleibt Phase 2. Ablauf und Fehlerbilder stehen in [PHASE1_M1_1_RUNBOOK.md](PHASE1_M1_1_RUNBOOK.md).
 
-- [x] PRoot und Loader mit NDK r28+ für arm64 bauen. (Der Smoke-Test lief mit den gepinnten Termux-Binaries; seit M1.2 baut CI PRoot, Loader, talloc und libandroid-shmem mit NDK r28 neu, siehe [tools/m1_2/BUILD.md](tools/m1_2/BUILD.md).)
+- [x] PRoot und Loader mit NDK r28+ für arm64 bauen. (Der erste Smoke-Test lief mit den gepinnten Termux-Binaries; seit M1.2 baut CI PRoot, Loader, talloc und libandroid-shmem mit NDK r28 neu. Der zweite Lauf bestand mit diesem Build ebenfalls 12 von 12, siehe [tools/m1_2/BUILD.md](tools/m1_2/BUILD.md).)
 - [x] `libproot.so`, `libproot-loader.so`, `libtalloc.so` in `jniLibs/arm64-v8a/` legen.
 - [x] `extractNativeLibs=true` setzen.
 - [x] Mini-Debian-Rootfs als tar mit einem temporären symlink-erhaltenden Extractor nach `filesDir` entpacken; kein normales ZIP.
@@ -531,7 +531,7 @@ Status: **GO am 2026-11-03 auf dem Moto G84.** Der Lauf mit `0.1.18` bestand 12 
 
 ### M1.2 — Toolchain-Pack (3–5 Tage)
 
-Status: **gestartet am 2026-11-03.** PRoot, Loader, talloc und libandroid-shmem baut der Android-Workflow mit NDK r28 aus gepinnten Quellen und prüft sie statisch auf 16 KB ([tools/m1_2/BUILD.md](tools/m1_2/BUILD.md)). Der eigentliche Toolchain-Pack ist noch offen.
+Status: **gestartet am 2026-11-03.** PRoot, Loader, talloc und libandroid-shmem baut der Android-Workflow mit NDK r28 aus gepinnten Quellen und prüft sie statisch auf 16 KB ([tools/m1_2/BUILD.md](tools/m1_2/BUILD.md)). Der M1.1-Smoke-Test bestand mit diesem Build auf dem Moto G84 erneut 12 von 12, inklusive ELF-Check mit `align=0x4000` für alle vier Bibliotheken. Der eigentliche Toolchain-Pack ist noch offen.
 
 - [x] PRoot, Loader, talloc und libandroid-shmem mit NDK r28 bauen und statisch auf 16 KB prüfen.
 - [ ] Debian-Rootfs als `tar.zst` mit JDK 17, Gradle 8.14.3, SDK 35/36 und statischen Build-Tools bestücken.
