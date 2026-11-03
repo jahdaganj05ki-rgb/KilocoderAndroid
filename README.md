@@ -69,7 +69,7 @@ Builds run only on GitHub Actions. Neither the phone nor a development machine n
 - Steps: `:app:testDebugUnitTest`, then `:app:assembleDebug` with `-PversionName=0.1.$GITHUB_RUN_NUMBER`
 - Artifact: `kilocoder-debug-apk` (`app-debug.apk`)
 
-A CI build from run 14 is version `0.1.14`. Install only artifacts from a run you trust.
+Each run produces a version like `0.1.<run_number>`; the run page shows the exact value. Install only artifacts from a run you trust.
 
 ## Branching
 
