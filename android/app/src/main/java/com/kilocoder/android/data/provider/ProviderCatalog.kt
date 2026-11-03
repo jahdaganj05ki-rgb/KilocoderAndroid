@@ -1,0 +1,306 @@
+package com.kilocoder.android.data.provider
+
+enum class Protocol {
+    OPENAI,
+    ANTHROPIC,
+    GEMINI,
+}
+
+enum class AuthStyle {
+    BEARER,
+    X_API_KEY,
+    API_KEY,
+    X_GOOG_API_KEY,
+}
+
+data class ProviderSpec(
+    val id: String,
+    val name: String,
+    val protocol: Protocol,
+    val baseUrl: String,
+    val models: List<String>,
+    val defaultModel: String,
+    val authStyle: AuthStyle,
+    val keyHint: String,
+    val keyUrl: String,
+    val docsUrl: String,
+    val summary: String,
+    val baseUrlHint: String = "",
+    val editableBaseUrl: Boolean = false,
+    val baseUrlRequired: Boolean = false,
+)
+
+object ProviderCatalog {
+    private const val OPENAI = "https://api.openai.com/v1"
+    private const val ANTHROPIC = "https://api.anthropic.com/v1"
+    private const val GEMINI = "https://generativelanguage.googleapis.com/v1beta"
+    private const val OPENROUTER = "https://openrouter.ai/api/v1"
+    private const val GROQ = "https://api.groq.com/openai/v1"
+    private const val MISTRAL = "https://api.mistral.ai/v1"
+    private const val DEEPSEEK = "https://api.deepseek.com/v1"
+    private const val XAI = "https://api.x.ai/v1"
+    private const val TOGETHER = "https://api.together.xyz/v1"
+    private const val FIREWORKS = "https://api.fireworks.ai/inference/v1"
+    private const val CEREBRAS = "https://api.cerebras.ai/v1"
+    private const val PERPLEXITY = "https://api.perplexity.ai"
+    private const val MOONSHOT = "https://api.moonshot.ai/v1"
+    private const val ZAI = "https://api.z.ai/api/paas/v4"
+    private const val KILO = "https://ai-gateway.kilo.ai/api/v1"
+
+    val all: List<ProviderSpec> = listOf(
+        ProviderSpec(
+            id = "openai",
+            name = "OpenAI",
+            protocol = Protocol.OPENAI,
+            baseUrl = OPENAI,
+            models = listOf("gpt-5", "gpt-5-mini", "gpt-4.1", "o4-mini"),
+            defaultModel = "gpt-5",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "sk-…",
+            keyUrl = "https://platform.openai.com/api-keys",
+            docsUrl = "https://platform.openai.com/docs",
+            summary = "OpenAI Chat Completions",
+        ),
+        ProviderSpec(
+            id = "anthropic",
+            name = "Anthropic",
+            protocol = Protocol.ANTHROPIC,
+            baseUrl = ANTHROPIC,
+            models = listOf("claude-sonnet-4-5", "claude-opus-4-1", "claude-haiku-4-5", "claude-sonnet-4"),
+            defaultModel = "claude-sonnet-4-5",
+            authStyle = AuthStyle.X_API_KEY,
+            keyHint = "sk-ant-…",
+            keyUrl = "https://console.anthropic.com/settings/keys",
+            docsUrl = "https://docs.anthropic.com",
+            summary = "Anthropic Messages",
+        ),
+        ProviderSpec(
+            id = "google",
+            name = "Google Gemini",
+            protocol = Protocol.GEMINI,
+            baseUrl = GEMINI,
+            models = listOf("gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"),
+            defaultModel = "gemini-2.5-flash",
+            authStyle = AuthStyle.X_GOOG_API_KEY,
+            keyHint = "AIza…",
+            keyUrl = "https://aistudio.google.com/app/apikey",
+            docsUrl = "https://ai.google.dev/gemini-api/docs",
+            summary = "Google Gemini API",
+        ),
+        ProviderSpec(
+            id = "openrouter",
+            name = "OpenRouter",
+            protocol = Protocol.OPENAI,
+            baseUrl = OPENROUTER,
+            models = listOf(
+                "openai/gpt-5",
+                "anthropic/claude-sonnet-4.5",
+                "google/gemini-2.5-pro",
+                "deepseek/deepseek-chat",
+                "qwen/qwen3-coder",
+            ),
+            defaultModel = "anthropic/claude-sonnet-4.5",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "sk-or-…",
+            keyUrl = "https://openrouter.ai/keys",
+            docsUrl = "https://openrouter.ai/docs",
+            summary = "OpenAI-kompatibles Routing",
+        ),
+        ProviderSpec(
+            id = "groq",
+            name = "Groq",
+            protocol = Protocol.OPENAI,
+            baseUrl = GROQ,
+            models = listOf("openai/gpt-oss-120b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b"),
+            defaultModel = "openai/gpt-oss-120b",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "gsk_…",
+            keyUrl = "https://console.groq.com/keys",
+            docsUrl = "https://console.groq.com/docs",
+            summary = "OpenAI-kompatibel, sehr schnell",
+        ),
+        ProviderSpec(
+            id = "mistral",
+            name = "Mistral",
+            protocol = Protocol.OPENAI,
+            baseUrl = MISTRAL,
+            models = listOf("mistral-large-latest", "mistral-medium-latest", "mistral-small-latest", "codestral-latest"),
+            defaultModel = "mistral-large-latest",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "…",
+            keyUrl = "https://console.mistral.ai/api-keys",
+            docsUrl = "https://docs.mistral.ai",
+            summary = "Mistral Chat Completions",
+        ),
+        ProviderSpec(
+            id = "deepseek",
+            name = "DeepSeek",
+            protocol = Protocol.OPENAI,
+            baseUrl = DEEPSEEK,
+            models = listOf("deepseek-chat", "deepseek-reasoner"),
+            defaultModel = "deepseek-chat",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "sk-…",
+            keyUrl = "https://platform.deepseek.com/api_keys",
+            docsUrl = "https://api-docs.deepseek.com",
+            summary = "OpenAI-kompatibel mit Reasoning",
+        ),
+        ProviderSpec(
+            id = "xai",
+            name = "xAI",
+            protocol = Protocol.OPENAI,
+            baseUrl = XAI,
+            models = listOf("grok-4", "grok-3", "grok-3-mini", "grok-code-fast-1"),
+            defaultModel = "grok-4",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "xai-…",
+            keyUrl = "https://console.x.ai",
+            docsUrl = "https://docs.x.ai",
+            summary = "Grok über OpenAI-kompatible API",
+        ),
+        ProviderSpec(
+            id = "together",
+            name = "Together AI",
+            protocol = Protocol.OPENAI,
+            baseUrl = TOGETHER,
+            models = listOf(
+                "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+                "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+                "deepseek-ai/DeepSeek-V3",
+            ),
+            defaultModel = "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "…",
+            keyUrl = "https://api.together.ai/settings/api-keys",
+            docsUrl = "https://docs.together.ai",
+            summary = "OpenAI-kompatibles Modell-Hosting",
+        ),
+        ProviderSpec(
+            id = "fireworks",
+            name = "Fireworks AI",
+            protocol = Protocol.OPENAI,
+            baseUrl = FIREWORKS,
+            models = listOf(
+                "accounts/fireworks/models/deepseek-v3",
+                "accounts/fireworks/models/llama-v3p3-70b-instruct",
+                "accounts/fireworks/models/qwen3-coder-480b-a35b-instruct",
+            ),
+            defaultModel = "accounts/fireworks/models/deepseek-v3",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "fw_…",
+            keyUrl = "https://fireworks.ai/account/api-keys",
+            docsUrl = "https://docs.fireworks.ai",
+            summary = "OpenAI-kompatibles Modell-Hosting",
+        ),
+        ProviderSpec(
+            id = "cerebras",
+            name = "Cerebras",
+            protocol = Protocol.OPENAI,
+            baseUrl = CEREBRAS,
+            models = listOf("llama-3.3-70b", "qwen-3-32b", "gpt-oss-120b"),
+            defaultModel = "llama-3.3-70b",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "csk-…",
+            keyUrl = "https://cloud.cerebras.ai",
+            docsUrl = "https://inference-docs.cerebras.ai",
+            summary = "OpenAI-kompatibel auf Wafer-Scale",
+        ),
+        ProviderSpec(
+            id = "perplexity",
+            name = "Perplexity",
+            protocol = Protocol.OPENAI,
+            baseUrl = PERPLEXITY,
+            models = listOf("sonar-pro", "sonar", "sonar-reasoning"),
+            defaultModel = "sonar-pro",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "pplx-…",
+            keyUrl = "https://www.perplexity.ai/settings/api",
+            docsUrl = "https://docs.perplexity.ai",
+            summary = "Sonar mit Websuche",
+        ),
+        ProviderSpec(
+            id = "moonshot",
+            name = "Moonshot",
+            protocol = Protocol.OPENAI,
+            baseUrl = MOONSHOT,
+            models = listOf("kimi-k2-0905-preview", "kimi-k2-turbo-preview", "moonshot-v1-128k"),
+            defaultModel = "kimi-k2-0905-preview",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "sk-…",
+            keyUrl = "https://platform.moonshot.ai/console/api-keys",
+            docsUrl = "https://platform.moonshot.ai/docs",
+            summary = "Kimi über OpenAI-kompatible API",
+        ),
+        ProviderSpec(
+            id = "zai",
+            name = "Z.AI",
+            protocol = Protocol.OPENAI,
+            baseUrl = ZAI,
+            models = listOf("glm-4.6", "glm-4.5", "glm-4.5-air"),
+            defaultModel = "glm-4.6",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "…",
+            keyUrl = "https://z.ai/manage-apikey/apikey-list",
+            docsUrl = "https://docs.z.ai",
+            summary = "GLM über OpenAI-kompatible API",
+        ),
+        ProviderSpec(
+            id = "kilogateway",
+            name = "Kilo Gateway",
+            protocol = Protocol.OPENAI,
+            baseUrl = KILO,
+            models = listOf(
+                "anthropic/claude-sonnet-4.5",
+                "openai/gpt-5",
+                "google/gemini-2.5-pro",
+                "deepseek/deepseek-chat",
+            ),
+            defaultModel = "anthropic/claude-sonnet-4.5",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "…",
+            keyUrl = "https://kilocode.ai",
+            docsUrl = "https://kilocode.ai/docs",
+            summary = "Kilo Gateway, OpenAI-kompatibel",
+        ),
+        ProviderSpec(
+            id = "azure",
+            name = "Azure OpenAI",
+            protocol = Protocol.OPENAI,
+            baseUrl = "",
+            models = emptyList(),
+            defaultModel = "",
+            authStyle = AuthStyle.API_KEY,
+            keyHint = "Azure-Key",
+            keyUrl = "https://portal.azure.com",
+            docsUrl = "https://learn.microsoft.com/azure/ai-services/openai",
+            summary = "Azure-Deployment mit vollständigem Endpoint",
+            baseUrlHint = "https://<resource>.openai.azure.com/openai/deployments/<deployment>/chat/completions?api-version=2024-10-21",
+            editableBaseUrl = true,
+            baseUrlRequired = true,
+        ),
+        ProviderSpec(
+            id = "custom",
+            name = "Custom OpenAI-kompatibel",
+            protocol = Protocol.OPENAI,
+            baseUrl = "",
+            models = emptyList(),
+            defaultModel = "",
+            authStyle = AuthStyle.BEARER,
+            keyHint = "API-Key",
+            keyUrl = "",
+            docsUrl = "",
+            summary = "Jeder OpenAI-kompatible Endpoint",
+            baseUrlHint = "https://api.example.com/v1",
+            editableBaseUrl = true,
+            baseUrlRequired = true,
+        ),
+    )
+
+    fun byId(id: String): ProviderSpec? = all.firstOrNull { it.id == id }
+
+    fun protocolName(protocol: Protocol): String = when (protocol) {
+        Protocol.OPENAI -> "OpenAI"
+        Protocol.ANTHROPIC -> "Anthropic"
+        Protocol.GEMINI -> "Gemini"
+    }
+}
