@@ -161,7 +161,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: m3-e2e-report
-          path: e2e-artifacts/
+          path: |
+            e2e-artifacts/
+            android/app/build/test-results/testDebugUnitTest/
+            android/app/build/reports/tests/testDebugUnitTest/
           if-no-files-found: warn
           retention-days: 7
 
