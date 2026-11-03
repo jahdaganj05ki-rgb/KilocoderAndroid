@@ -32,11 +32,14 @@ import com.kilocoder.android.ui.accounts.AccountsViewModel
 import com.kilocoder.android.ui.accounts.ProviderDetailScreen
 import com.kilocoder.android.ui.chat.ChatScreen
 import com.kilocoder.android.ui.chat.ChatViewModel
+import com.kilocoder.android.ui.github.GitHubScreen
+import com.kilocoder.android.ui.github.GitHubViewModel
 import com.kilocoder.android.ui.settings.SettingsScreen
 
 private enum class MainTab(@StringRes val label: Int, val glyph: String) {
     CHAT(R.string.nav_chat, "◆"),
     ACCOUNTS(R.string.nav_accounts, "≡"),
+    GITHUB(R.string.nav_github, "⌁"),
     SETTINGS(R.string.nav_settings, "⚙"),
 }
 
@@ -58,6 +61,13 @@ fun AppRoot(container: AppContainer) {
         factory = viewModelFactory {
             initializer {
                 ChatViewModel(container.agent, container.sessions, container.workspace)
+            }
+        },
+    )
+    val githubVm: GitHubViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                GitHubViewModel(container.github, container.installer)
             }
         },
     )
@@ -121,6 +131,8 @@ fun AppRoot(container: AppContainer) {
                             editor = EditorTarget(providerId, null)
                         },
                     )
+
+                    MainTab.GITHUB -> GitHubScreen(githubVm)
 
                     MainTab.SETTINGS -> SettingsScreen(accountsVm, container.workspace.rootPath)
                 }

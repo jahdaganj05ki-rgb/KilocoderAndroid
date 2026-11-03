@@ -6,6 +6,9 @@ import com.kilocoder.android.data.agent.AgentRepository
 import com.kilocoder.android.data.agent.WorkspaceTools
 import com.kilocoder.android.data.crypto.AndroidSecretBox
 import com.kilocoder.android.data.db.AppDatabase
+import com.kilocoder.android.data.github.GitHubApi
+import com.kilocoder.android.data.github.GitHubRepository
+import com.kilocoder.android.data.install.ApkInstaller
 import com.kilocoder.android.data.provider.AnthropicClient
 import com.kilocoder.android.data.provider.GeminiClient
 import com.kilocoder.android.data.provider.OpenAiClient
@@ -22,7 +25,7 @@ class AppContainer(context: Context) {
         context.applicationContext,
         AppDatabase::class.java,
         "kilocoder.db",
-    ).addMigrations(AppDatabase.MIGRATION_1_2)
+    ).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
         .build()
 
     private val clients = mapOf(
@@ -31,7 +34,9 @@ class AppContainer(context: Context) {
         Protocol.GEMINI to GeminiClient(ProviderHttp.client),
     )
 
-    val accounts = AccountRepository(db, AndroidSecretBox())
+    private val box = AndroidSecretBox()
+
+    val accounts = AccountRepository(db, box)
     val workspace = WorkspaceRepository(File(context.applicationContext.filesDir, "workspace"))
     val sessions = SessionRepository(db)
     val chat = ChatRepository(accounts = accounts, clients = clients)
@@ -40,4 +45,12 @@ class AppContainer(context: Context) {
         clients = clients,
         tools = WorkspaceTools(workspace),
     )
+    val github = GitHubRepository(
+        db = db,
+        box = box,
+        api = GitHubApi(),
+        workspace = workspace,
+        updates = File(context.applicationContext.cacheDir, "github"),
+    )
+    val installer = ApkInstaller(context.applicationContext)
 }

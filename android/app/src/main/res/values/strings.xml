@@ -20,6 +20,7 @@
 
     <string name="nav_chat">Chat</string>
     <string name="nav_accounts">Accounts</string>
+    <string name="nav_github">GitHub</string>
     <string name="nav_settings">Settings</string>
 
     <string name="accounts_title">Accounts</string>
@@ -125,6 +126,55 @@
     <string name="chat_tool_error">Error</string>
     <string name="chat_delete_session_title">Delete session?</string>
     <string name="chat_delete_session_body">“%1$s” and its messages will be removed from this device.</string>
+
+    <string name="github_title">GitHub</string>
+    <string name="github_subtitle">Push, build, install</string>
+    <string name="github_connection_title">Repository</string>
+    <string name="github_connected">Connected as @%1$s</string>
+    <string name="github_not_connected">Not connected</string>
+    <string name="github_owner">Owner</string>
+    <string name="github_owner_hint">owner</string>
+    <string name="github_repo">Repository</string>
+    <string name="github_repo_hint">repository</string>
+    <string name="github_branch">Branch</string>
+    <string name="github_branch_hint">main</string>
+    <string name="github_workflow">Workflow file</string>
+    <string name="github_workflow_hint">android.yml</string>
+    <string name="github_token">Personal access token</string>
+    <string name="github_token_hint">ghp_… or github_pat_…</string>
+    <string name="github_token_keep">Leave empty to keep the stored token.</string>
+    <string name="github_token_show">Show</string>
+    <string name="github_token_hide">Hide</string>
+    <string name="github_pat_hint">Classic PAT scopes: repo and workflow. Fine-grained PAT: Contents and Actions read/write.</string>
+    <string name="github_connect">Connect</string>
+    <string name="github_disconnect">Disconnect</string>
+    <string name="github_disconnect_title">Disconnect GitHub?</string>
+    <string name="github_disconnect_body">The encrypted PAT and repository settings will be removed from this device.</string>
+    <string name="github_push_title">Workspace push</string>
+    <string name="github_push_body">Pushes the app-private workspace as one commit through the GitHub Git Data API. No git binary is used.</string>
+    <string name="github_commit">Commit message</string>
+    <string name="github_push">Push workspace</string>
+    <string name="github_push_ok">Pushed %1$d files to %2$s (%3$s).</string>
+    <string name="github_push_skipped">%1$d files were skipped (binary or too large).</string>
+    <string name="github_dispatch">Start Android build</string>
+    <string name="github_runs_title">Workflow runs</string>
+    <string name="github_runs_hint">Latest runs on this branch.</string>
+    <string name="github_refresh">Refresh</string>
+    <string name="github_no_runs">No runs found.</string>
+    <string name="github_run_meta">#%1$d · %2$s · %3$s</string>
+    <string name="github_run_sha">Commit %1$s</string>
+    <string name="github_selected_run">Run #%1$d</string>
+    <string name="github_load_logs">Load logs</string>
+    <string name="github_load_artifacts">Load artifacts</string>
+    <string name="github_logs_title">Build logs</string>
+    <string name="github_logs_limit">Build logs are truncated to 200,000 characters.</string>
+    <string name="github_artifacts_title">Artifacts</string>
+    <string name="github_no_artifacts">No artifacts.</string>
+    <string name="github_install">Install</string>
+    <string name="github_install_hint">APKs are downloaded from the selected run’s artifacts. Android may ask you to allow installs from KiloCoder.</string>
+    <string name="github_install_confirm">Install %1$s?</string>
+    <string name="github_install_confirm_body">This downloads the APK and opens the Android installer. Only install artifacts from a repository you trust.</string>
+    <string name="github_artifact_expired">Expired</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Security, data, and build</string>

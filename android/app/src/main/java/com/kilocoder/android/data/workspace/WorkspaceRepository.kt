@@ -2,10 +2,22 @@ package com.kilocoder.android.data.workspace
 
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class WorkspaceException(message: String) : Exception(message)
+
+data class WorkspaceFile(
+    val path: String,
+    val content: String,
+    val bytes: Int,
+)
+
+data class WorkspaceSnapshot(
+    val files: List<WorkspaceFile>,
+    val skipped: Int,
+)
 
 class WorkspaceRepository(private val root: File) {
     init {
@@ -22,6 +34,60 @@ class WorkspaceRepository(private val root: File) {
             throw WorkspaceException("Path escapes the workspace: $path")
         }
         return target
+    }
+
+    suspend fun snapshot(
+        maxFiles: Int = 500,
+        maxTotalBytes: Int = 5_000_000,
+    ): WorkspaceSnapshot = withContext(Dispatchers.IO) {
+        val base = root.canonicalFile
+        if (!base.exists()) return@withContext WorkspaceSnapshot(emptyList(), 0)
+        val files = mutableListOf<WorkspaceFile>()
+        var skipped = 0
+        var total = 0
+
+        fun scan(dir: File) {
+            val children = dir.listFiles()
+                ?.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
+                ?: return
+            for (child in children) {
+                if (files.size >= maxFiles) {
+                    skipped += 1
+                    continue
+                }
+                if (child.name in IGNORED || !isInside(child) || sensitive(child.name)) continue
+                if (Files.isSymbolicLink(child.toPath())) {
+                    skipped += 1
+                    continue
+                }
+                if (child.isDirectory) {
+                    scan(child)
+                    continue
+                }
+                if (!child.isFile || child.length() > MAX_PUSH_FILE) {
+                    skipped += 1
+                    continue
+                }
+                val bytes = child.readBytes()
+                if (bytes.any { it == 0.toByte() }) {
+                    skipped += 1
+                    continue
+                }
+                if (total + bytes.size > maxTotalBytes) {
+                    skipped += 1
+                    continue
+                }
+                files += WorkspaceFile(
+                    path = relative(child).replace(File.separatorChar, '/'),
+                    content = bytes.toString(Charsets.UTF_8),
+                    bytes = bytes.size,
+                )
+                total += bytes.size
+            }
+        }
+
+        scan(base)
+        WorkspaceSnapshot(files, skipped)
     }
 
     suspend fun list(path: String = ".", recursive: Boolean = false): String =
@@ -169,6 +235,24 @@ class WorkspaceRepository(private val root: File) {
         if (!root.mkdirs()) throw WorkspaceException("Could not recreate the workspace.")
     }
 
+    private fun sensitive(name: String): Boolean {
+        val lower = name.lowercase()
+        if (lower == "local.properties") return true
+        if (lower == ".env") return true
+        if (lower.startsWith(".env.") &&
+            lower != ".env.example" &&
+            lower != ".env.sample"
+        ) {
+            return true
+        }
+        return lower.endsWith(".jks") ||
+            lower.endsWith(".keystore") ||
+            lower.endsWith(".p12") ||
+            lower.endsWith(".pfx") ||
+            lower == "id_rsa" ||
+            lower == "id_ed25519"
+    }
+
     private fun isInside(file: File): Boolean {
         val base = root.canonicalFile
         val target = try {
@@ -199,6 +283,7 @@ class WorkspaceRepository(private val root: File) {
         const val MAX_READ = 400_000L
         const val MAX_WRITE = 1_000_000
         const val MAX_SEARCH_FILE = 256_000L
+        const val MAX_PUSH_FILE = 1_000_000L
         val IGNORED = setOf(".git", "build", ".gradle", "node_modules", ".idea", ".kotlin")
     }
 }

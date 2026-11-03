@@ -11,16 +11,31 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProviderPolicyEntity::class,
         SessionEntity::class,
         SessionMessageEntity::class,
+        GitHubConfigEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accounts(): AccountDao
     abstract fun policies(): PolicyDao
     abstract fun sessions(): SessionDao
+    abstract fun github(): GitHubDao
 
     companion object {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `github_config` (" +
+                        "`id` INTEGER NOT NULL, `owner` TEXT NOT NULL, " +
+                        "`repo` TEXT NOT NULL, `branch` TEXT NOT NULL, " +
+                        "`workflow` TEXT NOT NULL, `tokenCipher` TEXT NOT NULL, " +
+                        "`tokenLast4` TEXT NOT NULL, `login` TEXT NOT NULL, " +
+                        "`updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                )
+            }
+        }
+
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

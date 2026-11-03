@@ -2,7 +2,41 @@
 
 Standalone, native Android coding agent. The agent runs on the phone; every Android build runs on GitHub Actions.
 
-This directory contains M2: the on-device agent loop, an app-private workspace, seven file tools, persisted sessions, deterministic context compaction, and the streaming chat UI from M1.
+This directory contains M3: an encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. M0's Compose shell and M1/M2 provider, account, agent, workspace, and session layers remain the base.
+
+## M3 features
+
+- One encrypted GitHub connection with owner, repository, branch, workflow file, and login.
+- PAT validation against `GET /user` and the selected repository before anything is stored.
+- Workspace push as one Git commit through the GitHub Git Data API. No git binary is bundled, and no shell runs on the phone.
+- Empty repositories are supported with an initial root commit and branch reference. Existing branches receive a fast-forward commit.
+- Workflow dispatch for the configured branch and workflow file.
+- Latest 15 workflow runs for the branch, with status, conclusion, run number, commit SHA, and timestamps.
+- Build-log download from the run logs endpoint, ZIP extraction, and a 200,000-character display cap.
+- Artifact listing and APK download from the selected run. The system installer is opened through a scoped `FileProvider` URI.
+- Sensitive files are never pushed: `.env` files, `local.properties`, keystores, private keys, and common certificate files are skipped.
+- English and German UI strings.
+
+## GitHub token
+
+The PAT is encrypted with the same Android Keystore-backed AES-256-GCM box as provider keys. Only the last four characters and the GitHub login are stored in clear text.
+
+Required permissions:
+
+- Classic PAT: `repo` and `workflow`. Add `read:org` only if the repository is owned by an organization that requires it.
+- Fine-grained PAT: `Contents` read/write and `Actions` read/write for the selected repository.
+
+The repository must already exist. The workflow file must exist on the selected branch; the default is `android.yml`. A push or dispatch against a protected branch can be rejected by GitHub and is shown as an error.
+
+## Workflow
+
+1. Enter the PAT, owner, repository, branch, and workflow file, then connect.
+2. Push the app-private workspace. The snapshot becomes a commit on the selected branch.
+3. Start the Android build through workflow dispatch.
+4. Refresh runs, select a run, and load its logs or artifacts.
+5. Install the APK artifact. Android may ask for permission to install apps from KiloCoder.
+
+The push uses the tree, commit, and reference endpoints. It sends a complete snapshot; files missing from the workspace are deleted from the new tree. Binary files, ignored directories, files over 1 MB, and snapshots over 5 MB are skipped. A run’s logs are capped at 50 MB compressed and 200,000 displayed characters.
 
 ## M2 features
 
@@ -12,9 +46,6 @@ This directory contains M2: the on-device agent loop, an app-private workspace, 
 - Room-backed sessions and message history, including assistant tool calls and tool results. Sessions can be reopened or deleted from the chat.
 - Deterministic compaction: when the history exceeds 28,000 characters, older turns are summarized locally, the last ten turns are kept, and no extra model call is made.
 - Existing account rotation and failover are reused for every model step, including tool-calling turns.
-- Tool output is capped at 12,000 characters per result. Reads are capped at 400,000 bytes; writes at 1,000,000 characters.
-- Chat UI shows reasoning, tool cards, tool errors, the selected account, the compaction marker, and saved sessions.
-- English and German UI strings.
 
 ## M1 features
 
@@ -85,9 +116,11 @@ Each provider adapter converts the same `ChatTurn` history into its own format:
 | List entries | 500 |
 | Recursion | 8 levels |
 | Tool result in chat | 12,000 characters |
+| GitHub push snapshot | 500 files / 5 MB |
+| GitHub push file | 1 MB |
 | Ignored directories | `.git`, `build`, `.gradle`, `node_modules`, `.idea`, `.kotlin` |
 
-The workspace is app-private. It is not shared storage, and the app does not request `READ_EXTERNAL_STORAGE` or `WRITE_EXTERNAL_STORAGE`. A later milestone can add repository checkout and GitHub Actions dispatch.
+The workspace is app-private. It is not shared storage, and the app does not request `READ_EXTERNAL_STORAGE` or `WRITE_EXTERNAL_STORAGE`. APK installation uses `REQUEST_INSTALL_PACKAGES` and only exposes downloaded artifacts through a cache-scoped `FileProvider`.
 
 ## Structure
 
@@ -96,17 +129,20 @@ android/
   app/src/main/java/com/kilocoder/android/
     KiloCoderApp.kt              Application entry point
     MainActivity.kt              Compose host activity
-    AppContainer.kt              Room, crypto, clients, repositories, agent
+    AppContainer.kt              Room, crypto, clients, repositories, agent, GitHub
     data/agent/                  Agent loop, workspace tools, compaction
     data/crypto/                 Keystore-backed AES-GCM secret box
-    data/db/                     Accounts, policies, sessions, DAOs, Room database
+    data/db/                     Accounts, policies, sessions, GitHub config, DAOs
+    data/github/                 GitHub API, push, runs, logs, artifacts
+    data/install/                Scoped APK installer intent
     data/provider/               Catalog, protocol clients, SSE parsers, tool schemas
     data/repo/                   Account CRUD, streaming chat, session persistence
-    data/workspace/              Sandboxed workspace file operations
+    data/workspace/              Sandboxed workspace file operations and snapshots
     domain/account/              Rotation modes and account selector
     ui/AppRoot.kt                Bottom navigation and editor host
     ui/accounts/                 Overview, provider detail, editor
     ui/chat/                     Agent ViewModel, chat screen, sessions dialog
+    ui/github/                   GitHub connection, build, run, log, artifact UI
     ui/settings/                 Security, workspace, local data, and about
     ui/theme/                    Color, type, and Material 3 theme
   app/src/main/res/              Strings (en/de), launcher icon, platform theme
@@ -115,10 +151,12 @@ android/
 
 ## Security notes
 
-- API keys are encrypted before they are written to Room. Plain keys are never logged.
+- API keys and the GitHub PAT are encrypted before they are written to Room. Plain secrets are never logged.
 - `android:allowBackup="false"` keeps the encrypted database out of Android cloud backup.
 - The agent has no shell, no network tools, and no access outside the app-private workspace. Path traversal and escaping symlinks are rejected.
-- Tool arguments and results are untrusted model output. The workspace applies size limits and canonical-path checks before every operation.
+- GitHub pushes omit sensitive local files and never upload the encrypted token database.
+- APK downloads are written only under `cacheDir/github`; the `FileProvider` exposes that directory only. The user must confirm every install in the system installer.
+- Tool arguments, model output, logs, and artifact names are untrusted. The app applies size limits and path checks before handling them.
 - The app is a separate package (`com.kilocoder.android`) and does not use Kilo Code branding.
 - Portions of the agent design are derived from Kilo Code and OpenCode, both MIT licensed.
 
@@ -129,5 +167,5 @@ android/
 | M0 | Gradle scaffold, Compose shell, CI build, installable debug APK |
 | M1 | Provider catalog, encrypted multi-account storage, rotation, streaming chat |
 | M2 | Agent loop, file tools, app-private workspace, sessions, compaction |
-| M3 | GitHub PAT, repository push, Actions dispatch, logs, artifact install |
+| M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install |
 | M4 | German/English polish, self-update, rollback, release signing |

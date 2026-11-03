@@ -16,6 +16,7 @@
 
     <string name="nav_chat">Chat</string>
     <string name="nav_accounts">Konten</string>
+    <string name="nav_github">GitHub</string>
     <string name="nav_settings">Einstellungen</string>
 
     <string name="accounts_title">Konten</string>
@@ -121,6 +122,55 @@
     <string name="chat_tool_error">Fehler</string>
     <string name="chat_delete_session_title">Sitzung löschen?</string>
     <string name="chat_delete_session_body">„%1$s“ und die zugehörigen Nachrichten werden von diesem Gerät entfernt.</string>
+
+    <string name="github_title">GitHub</string>
+    <string name="github_subtitle">Pushen, bauen, installieren</string>
+    <string name="github_connection_title">Repository</string>
+    <string name="github_connected">Verbunden als @%1$s</string>
+    <string name="github_not_connected">Nicht verbunden</string>
+    <string name="github_owner">Owner</string>
+    <string name="github_owner_hint">Eigentümer</string>
+    <string name="github_repo">Repository</string>
+    <string name="github_repo_hint">Repository</string>
+    <string name="github_branch">Branch</string>
+    <string name="github_branch_hint">main</string>
+    <string name="github_workflow">Workflow-Datei</string>
+    <string name="github_workflow_hint">android.yml</string>
+    <string name="github_token">Persönlicher Access-Token</string>
+    <string name="github_token_hint">ghp_… oder github_pat_…</string>
+    <string name="github_token_keep">Leer lassen, um den gespeicherten Token zu behalten.</string>
+    <string name="github_token_show">Zeigen</string>
+    <string name="github_token_hide">Verbergen</string>
+    <string name="github_pat_hint">Classic PAT: Scopes repo und workflow. Fine-grained PAT: Contents und Actions lesen/schreiben.</string>
+    <string name="github_connect">Verbinden</string>
+    <string name="github_disconnect">Trennen</string>
+    <string name="github_disconnect_title">GitHub trennen?</string>
+    <string name="github_disconnect_body">Der verschlüsselte PAT und die Repository-Einstellungen werden von diesem Gerät entfernt.</string>
+    <string name="github_push_title">Workspace-Push</string>
+    <string name="github_push_body">Pusht den app-privaten Workspace als einen Commit über die GitHub Git Data API. Es wird kein Git-Binary verwendet.</string>
+    <string name="github_commit">Commit-Nachricht</string>
+    <string name="github_push">Workspace pushen</string>
+    <string name="github_push_ok">%1$d Dateien nach %2$s gepusht (%3$s).</string>
+    <string name="github_push_skipped">%1$d Dateien wurden übersprungen (binär oder zu groß).</string>
+    <string name="github_dispatch">Android-Build starten</string>
+    <string name="github_runs_title">Workflow-Läufe</string>
+    <string name="github_runs_hint">Neueste Läufe auf diesem Branch.</string>
+    <string name="github_refresh">Aktualisieren</string>
+    <string name="github_no_runs">Keine Läufe gefunden.</string>
+    <string name="github_run_meta">#%1$d · %2$s · %3$s</string>
+    <string name="github_run_sha">Commit %1$s</string>
+    <string name="github_selected_run">Lauf #%1$d</string>
+    <string name="github_load_logs">Logs laden</string>
+    <string name="github_load_artifacts">Artefakte laden</string>
+    <string name="github_logs_title">Build-Logs</string>
+    <string name="github_logs_limit">Build-Logs werden auf 200.000 Zeichen gekürzt.</string>
+    <string name="github_artifacts_title">Artefakte</string>
+    <string name="github_no_artifacts">Keine Artefakte.</string>
+    <string name="github_install">Installieren</string>
+    <string name="github_install_hint">APKs werden aus den Artefakten des ausgewählten Laufs geladen. Android fragt eventuell nach der Erlaubnis, Apps von KiloCoder zu installieren.</string>
+    <string name="github_install_confirm">%1$s installieren?</string>
+    <string name="github_install_confirm_body">Die APK wird heruntergeladen und der Android-Installer geöffnet. Installiere nur Artefakte aus einem Repository, dem du vertraust.</string>
+    <string name="github_artifact_expired">Abgelaufen</string>
 
     <string name="settings_title">Einstellungen</string>
     <string name="settings_subtitle">Sicherheit, Daten und Build</string>
