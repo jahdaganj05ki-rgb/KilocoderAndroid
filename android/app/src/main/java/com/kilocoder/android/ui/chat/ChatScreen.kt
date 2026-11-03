@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ import com.kilocoder.android.data.provider.ProviderSpec
 import com.kilocoder.android.ui.accounts.AccountsViewModel
 import com.kilocoder.android.ui.components.EmptyState
 import com.kilocoder.android.ui.components.Pill
+import com.kilocoder.android.ui.components.PillTone
 import com.kilocoder.android.ui.components.ScreenHeader
 
 @Composable
@@ -68,6 +70,7 @@ fun ChatScreen(
             .filter { it.providerId == state.providerId }
             .sortedBy { it.position }
     }
+    var sessionsOpen by remember { mutableStateOf(false) }
 
     LaunchedEffect(accounts.map { it.id }, state.pinned) {
         if (state.pinned != null && accounts.none { it.id == state.pinned }) {
@@ -82,13 +85,23 @@ fun ChatScreen(
         }
     }
 
+    val sessionTitle = state.sessions
+        .firstOrNull { it.id == state.sessionId }
+        ?.title
+        ?.takeIf { it.isNotBlank() && it != "New chat" }
+
     Column(modifier = Modifier.fillMaxSize()) {
         ScreenHeader(
             title = stringResource(R.string.chat_title),
-            subtitle = stringResource(R.string.chat_subtitle),
+            subtitle = sessionTitle ?: stringResource(R.string.chat_subtitle),
             action = {
-                TextButton(onClick = vm::clear) {
-                    Text(stringResource(R.string.chat_new_chat))
+                Row {
+                    TextButton(onClick = { sessionsOpen = true }) {
+                        Text(stringResource(R.string.chat_sessions))
+                    }
+                    TextButton(onClick = vm::newChat) {
+                        Text("+", style = MaterialTheme.typography.titleLarge)
+                    }
                 }
             },
         )
@@ -107,6 +120,14 @@ fun ChatScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Pill(stringResource(R.string.chat_current_account, label))
+            }
+        }
+        if (state.compacted) {
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Pill(stringResource(R.string.chat_compacted), PillTone.Warning)
             }
         }
         LazyColumn(
@@ -135,6 +156,23 @@ fun ChatScreen(
             onInput = vm::setInput,
             onSend = vm::send,
             onStop = vm::stop,
+        )
+    }
+
+    if (sessionsOpen) {
+        SessionsDialog(
+            sessions = state.sessions,
+            currentId = state.sessionId,
+            onSelect = {
+                vm.loadSession(it)
+                sessionsOpen = false
+            },
+            onDelete = vm::deleteSession,
+            onNew = {
+                vm.newChat()
+                sessionsOpen = false
+            },
+            onDismiss = { sessionsOpen = false },
         )
     }
 }
@@ -273,31 +311,49 @@ private fun ControlCard(
 
 @Composable
 private fun MessageBubble(message: ChatMessage) {
+    when (message.role) {
+        ChatRole.USER -> UserBubble(message)
+        ChatRole.ASSISTANT -> AssistantBubble(message)
+        ChatRole.TOOL -> ToolBubble(message)
+    }
+}
+
+@Composable
+private fun UserBubble(message: ChatMessage) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.user) Arrangement.End else Arrangement.Start,
+        horizontalArrangement = Arrangement.End,
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(0.9f),
             shape = RoundedCornerShape(18.dp),
-            color = if (message.user) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
-            contentColor = if (message.user) {
-                MaterialTheme.colorScheme.onPrimary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-            border = if (message.user) {
-                null
-            } else {
-                BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
-                )
-            },
+            color = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                SelectionContainer {
+                    Text(text = message.text, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssistantBubble(message: ChatMessage) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(0.9f),
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            border = BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.45f),
+            ),
         ) {
             Column(
                 modifier = Modifier.padding(14.dp),
@@ -333,7 +389,15 @@ private fun MessageBubble(message: ChatMessage) {
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
-                } else if (message.streaming) {
+                }
+                if (message.toolCalls.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        message.toolCalls.forEach { call ->
+                            Pill(call.name, PillTone.Accent)
+                        }
+                    }
+                }
+                if (message.streaming) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -344,13 +408,64 @@ private fun MessageBubble(message: ChatMessage) {
                         )
                         Text("…", style = MaterialTheme.typography.bodyMedium)
                     }
-                }
-                if (message.streaming) {
                     LinearProgressIndicator(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(2.dp),
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToolBubble(message: ChatMessage) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(0.92f),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            border = BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+            ),
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Pill(
+                        text = message.toolName ?: stringResource(R.string.chat_tool),
+                        tone = PillTone.Accent,
+                    )
+                    if (message.isError) {
+                        Pill(stringResource(R.string.chat_tool_error), PillTone.Error)
+                    }
+                    if (message.streaming) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(12.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                }
+                if (message.text.isNotBlank()) {
+                    SelectionContainer {
+                        Text(
+                            text = message.text.take(4_000),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                            ),
+                        )
+                    }
                 }
             }
         }

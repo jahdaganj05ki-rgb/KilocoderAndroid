@@ -31,7 +31,7 @@ import com.kilocoder.android.ui.accounts.AccountsViewModel
 import com.kilocoder.android.ui.components.ScreenHeader
 
 @Composable
-fun SettingsScreen(vm: AccountsViewModel) {
+fun SettingsScreen(vm: AccountsViewModel, workspacePath: String) {
     val state by vm.state.collectAsStateWithLifecycle()
     var confirm by remember { mutableStateOf(false) }
     val accounts = state.accounts.size
@@ -51,6 +51,12 @@ fun SettingsScreen(vm: AccountsViewModel) {
                 InfoCard(
                     title = stringResource(R.string.settings_security_title),
                     body = stringResource(R.string.settings_security_body),
+                )
+            }
+            item {
+                InfoCard(
+                    title = stringResource(R.string.settings_workspace_title),
+                    body = stringResource(R.string.settings_workspace_body, workspacePath),
                 )
             }
             item {

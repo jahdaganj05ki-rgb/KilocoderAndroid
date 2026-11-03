@@ -28,6 +28,15 @@ sealed interface ChatEvent {
     data class Account(val id: String, val label: String) : ChatEvent
     data class Delta(val text: String) : ChatEvent
     data class Reasoning(val text: String) : ChatEvent
+    data class ToolStart(val id: String, val name: String, val arguments: String) : ChatEvent
+    data class ToolResult(
+        val id: String,
+        val name: String,
+        val output: String,
+        val isError: Boolean,
+    ) : ChatEvent
+
+    data class Compacted(val summary: String) : ChatEvent
     data object Completed : ChatEvent
     data class Failed(val error: ChatFailure) : ChatEvent
 }
@@ -101,6 +110,8 @@ class ChatRepository(
                             send(ChatEvent.Reasoning(event.text))
                         }
 
+                        is StreamEvent.ToolCallDelta -> Unit
+                        is StreamEvent.Finish -> Unit
                         StreamEvent.Done -> done = true
 
                         is StreamEvent.Failure -> failure = event.error

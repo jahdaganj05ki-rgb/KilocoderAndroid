@@ -56,7 +56,45 @@ class ProtocolParsingTest {
         val events = GeminiParser.parse(
             """{"candidates":[{"content":{"parts":[{"text":"Hallo"}]},"finishReason":"STOP"}]}""",
         )
-        assertEquals(listOf(StreamEvent.Text("Hallo")), events)
+        assertTrue(events.contains(StreamEvent.Text("Hallo")))
+        assertTrue(events.any { it is StreamEvent.Finish && it.reason == "STOP" })
+    }
+
+    @Test
+    fun openAiReadsToolCall() {
+        val events = OpenAiParser.parse(
+            """{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"read_file","arguments":"{\"path\":\"a.txt\"}"}}]},"finish_reason":"tool_calls"}]}""",
+        )
+        val call = events.filterIsInstance<StreamEvent.ToolCallDelta>().single()
+        assertEquals("call_1", call.id)
+        assertEquals("read_file", call.name)
+        assertTrue(events.any { it is StreamEvent.Finish && it.reason == "tool_calls" })
+    }
+
+    @Test
+    fun anthropicReadsToolStartAndJsonDelta() {
+        val start = AnthropicParser.parse(
+            "content_block_start",
+            """{"index":0,"content_block":{"type":"tool_use","id":"toolu_1","name":"read_file"}}""",
+        ).single() as StreamEvent.ToolCallDelta
+        assertEquals("toolu_1", start.id)
+        assertEquals("read_file", start.name)
+
+        val delta = AnthropicParser.parse(
+            "content_block_delta",
+            """{"index":0,"delta":{"type":"input_json_delta","partial_json":"{\"path\":"}}""",
+        ).single() as StreamEvent.ToolCallDelta
+        assertEquals("{\"path\":", delta.arguments)
+    }
+
+    @Test
+    fun geminiReadsFunctionCall() {
+        val events = GeminiParser.parse(
+            """{"candidates":[{"content":{"parts":[{"functionCall":{"name":"list_files","args":{"path":"."}}}]},"finishReason":"STOP"}]}""",
+        )
+        val call = events.filterIsInstance<StreamEvent.ToolCallDelta>().single()
+        assertEquals("list_files", call.name)
+        assertTrue(call.arguments!!.contains("path"))
     }
 
     @Test

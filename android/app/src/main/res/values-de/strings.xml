@@ -113,11 +113,21 @@
     <string name="chat_error_generic">Anfrage fehlgeschlagen.</string>
     <string name="chat_current_account">über %1$s</string>
     <string name="chat_new_chat">Neuer Chat</string>
+    <string name="chat_sessions">Sitzungen</string>
+    <string name="chat_sessions_hint">Auf diesem Gerät gespeichert</string>
+    <string name="chat_no_sessions">Noch keine Sitzungen</string>
+    <string name="chat_compacted">Früherer Kontext komprimiert</string>
+    <string name="chat_tool">Tool</string>
+    <string name="chat_tool_error">Fehler</string>
+    <string name="chat_delete_session_title">Sitzung löschen?</string>
+    <string name="chat_delete_session_body">„%1$s“ und die zugehörigen Nachrichten werden von diesem Gerät entfernt.</string>
 
     <string name="settings_title">Einstellungen</string>
     <string name="settings_subtitle">Sicherheit, Daten und Build</string>
     <string name="settings_security_title">Lokale Keys</string>
     <string name="settings_security_body">API-Keys werden mit AES-256-GCM im Android Keystore verschlüsselt. Android-Backup ist deaktiviert, damit Keys nicht über Cloud-Backups das Gerät verlassen.</string>
+    <string name="settings_workspace_title">Workspace</string>
+    <string name="settings_workspace_body">Der Agent liest und schreibt Dateien nur in diesem app-privaten Verzeichnis:\n%1$s</string>
     <string name="settings_data_title">Lokale Daten</string>
     <string name="settings_data_body">%1$d Konten bei %2$d Providern liegen in der lokalen Room-Datenbank.</string>
     <string name="settings_clear">Alle Konten löschen</string>

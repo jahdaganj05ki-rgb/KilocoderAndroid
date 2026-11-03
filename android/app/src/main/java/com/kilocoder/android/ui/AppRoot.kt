@@ -57,7 +57,7 @@ fun AppRoot(container: AppContainer) {
     val chatVm: ChatViewModel = viewModel(
         factory = viewModelFactory {
             initializer {
-                ChatViewModel(container.chat)
+                ChatViewModel(container.agent, container.sessions, container.workspace)
             }
         },
     )
@@ -122,7 +122,7 @@ fun AppRoot(container: AppContainer) {
                         },
                     )
 
-                    MainTab.SETTINGS -> SettingsScreen(accountsVm)
+                    MainTab.SETTINGS -> SettingsScreen(accountsVm, container.workspace.rootPath)
                 }
             }
         }

@@ -117,11 +117,21 @@
     <string name="chat_error_generic">Request failed.</string>
     <string name="chat_current_account">via %1$s</string>
     <string name="chat_new_chat">New chat</string>
+    <string name="chat_sessions">Sessions</string>
+    <string name="chat_sessions_hint">Saved on this device</string>
+    <string name="chat_no_sessions">No saved sessions yet</string>
+    <string name="chat_compacted">Earlier context compacted</string>
+    <string name="chat_tool">Tool</string>
+    <string name="chat_tool_error">Error</string>
+    <string name="chat_delete_session_title">Delete session?</string>
+    <string name="chat_delete_session_body">“%1$s” and its messages will be removed from this device.</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Security, data, and build</string>
     <string name="settings_security_title">Local keys</string>
     <string name="settings_security_body">API keys are encrypted with AES-256-GCM in the Android Keystore. Android backup is disabled, so keys never leave this device through cloud backup.</string>
+    <string name="settings_workspace_title">Workspace</string>
+    <string name="settings_workspace_body">The agent reads and writes files only inside this app-private directory:\n%1$s</string>
     <string name="settings_data_title">Local data</string>
     <string name="settings_data_body">%1$d accounts across %2$d providers are stored in the local Room database.</string>
     <string name="settings_clear">Delete all accounts</string>

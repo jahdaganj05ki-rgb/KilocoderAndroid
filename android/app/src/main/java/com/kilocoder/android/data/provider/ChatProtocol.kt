@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -25,11 +26,29 @@ import java.util.concurrent.TimeUnit
 enum class Role {
     USER,
     ASSISTANT,
+    TOOL,
 }
+
+@Serializable
+data class ChatToolCall(
+    val id: String,
+    val name: String,
+    val arguments: String,
+)
 
 data class ChatTurn(
     val role: Role,
-    val text: String,
+    val text: String = "",
+    val toolCalls: List<ChatToolCall> = emptyList(),
+    val toolCallId: String? = null,
+    val name: String? = null,
+    val isError: Boolean = false,
+)
+
+data class ChatToolSpec(
+    val name: String,
+    val description: String,
+    val parameters: JsonObject,
 )
 
 data class ChatRequest(
@@ -37,11 +56,20 @@ data class ChatRequest(
     val system: String,
     val turns: List<ChatTurn>,
     val maxTokens: Int = 4096,
+    val tools: List<ChatToolSpec> = emptyList(),
 )
 
 sealed interface StreamEvent {
     data class Text(val text: String) : StreamEvent
     data class Reasoning(val text: String) : StreamEvent
+    data class ToolCallDelta(
+        val index: Int,
+        val id: String? = null,
+        val name: String? = null,
+        val arguments: String? = null,
+    ) : StreamEvent
+
+    data class Finish(val reason: String?) : StreamEvent
     data object Done : StreamEvent
     data class Failure(val error: ProviderFailure) : StreamEvent
 }
@@ -134,7 +162,7 @@ object ProviderHttp {
             status == 408 ||
             status == 409 ||
             status == 429 ||
-            (status != null && status >= 500)
+            status >= 500
         return ProviderFailure(
             message = message,
             status = status,
