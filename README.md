@@ -15,7 +15,7 @@ KiloCoder is a native Android coding agent. It runs on the phone: you chat with 
 | M2 | Agent loop, workspace tools, sessions, compaction | done |
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, acceptance criteria | done |
-| Phase 1 · M1.1 | PRoot smoke test for on-device builds | harness built in CI; device run open |
+| Phase 1 · M1.1 | PRoot smoke test for on-device builds | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
 | Phase 1 · M1.2–M1.6 | Toolchain pack, hello build, multi-project build, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 
@@ -125,7 +125,7 @@ android/
 | M2 | Agent loop, file tools, app-private workspace, sessions, compaction | done |
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
-| Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | device run open |
+| Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
 | Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | planned |
 | Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |

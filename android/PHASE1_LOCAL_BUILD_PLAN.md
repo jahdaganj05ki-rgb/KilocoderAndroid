@@ -502,24 +502,24 @@ Status: **abgeschlossen am 2026-11-03**. Alle Festlegungen stehen in [PHASE1_M1_
 
 ### M1.1 — PRoot-Smoke-Test (2–3 Tage)
 
-Status: **Harness vorbereitet am 2026-11-03, Gerätelauf offen.** Debug-APK mit PRoot-Binaries, gepinntem Rootfs-Download, symlink-erhaltendem Extraktor und Smoke-Screen liegen vor; Ablauf und Fehlerbilder stehen in [PHASE1_M1_1_RUNBOOK.md](PHASE1_M1_1_RUNBOOK.md). Die Kästchen unten werden erst nach dem Lauf auf dem Moto G84 abgehakt.
+Status: **GO am 2026-11-03 auf dem Moto G84.** Der Lauf mit `0.1.18` bestand 12 von 12 Prüfungen (Android 15/API 35, `targetSdk 36`, PAGE_SIZE 4096), inklusive Guest-Exec, Exit-Code, Abbruch und `java -version`. Die 16-KB-Prüfung ist statisch; ein 16-KB-Lauf bleibt Phase 2. Ablauf und Fehlerbilder stehen in [PHASE1_M1_1_RUNBOOK.md](PHASE1_M1_1_RUNBOOK.md).
 
-- [ ] PRoot und Loader mit NDK r28+ für arm64 bauen. (Für den Smoke-Test laufen vorerst die gepinnten Termux-Binaries; M1.2 ersetzt sie durch den eigenen Build.)
-- [ ] `libproot.so`, `libproot-loader.so`, `libtalloc.so` in `jniLibs/arm64-v8a/` legen.
-- [ ] `extractNativeLibs=true` setzen.
-- [ ] Mini-Debian-Rootfs als tar mit einem temporären symlink-erhaltenden Extractor nach `filesDir` entpacken; kein normales ZIP.
-- [ ] `libproot.so --version` aus `nativeLibraryDir` starten.
-- [ ] `PROOT_LOADER` auf `nativeLibraryDir/libproot-loader.so` setzen.
-- [ ] `/bin/echo ok` im Guest ausführen.
-- [ ] `readlink /bin/sh` und `/bin/bash -c 'echo ok'` ausführen.
-- [ ] `java -version` im Guest ausführen.
-- [ ] `getconf PAGE_SIZE` und `uname -m` dokumentieren.
-- [ ] Auf dem Moto G84 (Android 15) mit `targetSdk 36` testen.
-- [ ] Pflicht: Build mit aktivem Schalter. Optional: Gegenprobe mit Standardlimit (Schalter aus, Neustart); Signal 9 dokumentieren.
-- [ ] 16-KB-ELF-Ausrichtung statisch prüfen; in Phase 1 keinen 16-KB-Lauf erzwingen.
-- [ ] Abbruch mit laufendem Guest-Prozess; keine Zombies.
-- [ ] Ergebnis und Logs dokumentieren.
-- [ ] Alle 13 Akzeptanzkriterien aus [PHASE1_M1_0_DECISIONS.md](PHASE1_M1_0_DECISIONS.md), Abschnitt 10, einzeln abhaken.
+- [ ] PRoot und Loader mit NDK r28+ für arm64 bauen. (Der Smoke-Test lief mit den gepinnten Termux-Binaries; M1.2 baut sie mit NDK r28 neu.)
+- [x] `libproot.so`, `libproot-loader.so`, `libtalloc.so` in `jniLibs/arm64-v8a/` legen.
+- [x] `extractNativeLibs=true` setzen.
+- [x] Mini-Debian-Rootfs als tar mit einem temporären symlink-erhaltenden Extractor nach `filesDir` entpacken; kein normales ZIP.
+- [x] `libproot.so --version` aus `nativeLibraryDir` starten.
+- [x] `PROOT_LOADER` auf `nativeLibraryDir/libproot-loader.so` setzen.
+- [x] `/bin/echo ok` im Guest ausführen.
+- [x] `readlink /bin/sh` und `/bin/bash -c 'echo ok'` ausführen.
+- [x] `java -version` im Guest ausführen.
+- [x] `getconf PAGE_SIZE` und `uname -m` dokumentieren.
+- [x] Auf dem Moto G84 (Android 15) mit `targetSdk 36` testen.
+- [x] Pflicht: Build mit aktivem Schalter. Optional: Gegenprobe mit Standardlimit (Schalter aus, Neustart); Signal 9 dokumentieren. (Gegenprobe nicht gefahren.)
+- [x] 16-KB-ELF-Ausrichtung statisch prüfen; in Phase 1 keinen 16-KB-Lauf erzwingen.
+- [x] Abbruch mit laufendem Guest-Prozess; keine Zombies. (Zweiter Lauf ok; `ps`-Restprüfung offen.)
+- [x] Ergebnis und Logs dokumentieren.
+- [ ] Alle 13 Akzeptanzkriterien aus [PHASE1_M1_0_DECISIONS.md](PHASE1_M1_0_DECISIONS.md), Abschnitt 10, einzeln abhaken. (1–7, 9, 12 belegt; 8 und 10 teilweise, 11 nicht gefahren.)
 
 **Go/No-Go:** Wenn Guest-Exec unter `targetSdk 36` nicht funktioniert, wird Phase 1 hier gestoppt. Fallbacks:
 
@@ -787,7 +787,7 @@ Vor jeder Implementierung:
 
 1. Diesen Plan freigeben.
 2. M1.0 starten.
-3. M1.1 auf dem Zielgerät ausführen.
+3. M1.1 auf dem Zielgerät ausführen (erledigt am 2026-11-03: GO).
 4. Erst nach dem Go/No-Go mit M1.2 fortfahren.
 
 Der Plan ändert keine App-Funktion. Er legt nur fest, was Phase 1 beweisen muss und wann abgebrochen wird.
