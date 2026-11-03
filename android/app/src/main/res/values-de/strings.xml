@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_eyebrow">KILOCODER · M0</string>
+    <string name="welcome_title">Dein Coder.\nAuf deinem Gerät.</string>
+    <string name="welcome_body">Ein nativer Android-Coding-Agent. Er bearbeitet dein Projekt und führt jeden Build über GitHub Actions aus.</string>
+    <string name="status_ready">Build-Pipeline bereit</string>
+    <string name="pipeline_title">GitHub Actions</string>
+    <string name="pipeline_body">Kein JDK oder Gradle auf dem Handy. Der Agent pusht, der Runner baut, die App installiert das APK.</string>
+    <string name="step_commit">Push</string>
+    <string name="step_build">Build</string>
+    <string name="step_apk">APK</string>
+    <string name="next_title">Provider &amp; Accounts</string>
+    <string name="next_body">Als Nächstes: verschlüsselte API-Keys, mehrere Konten pro Provider und automatische Account-Rotation.</string>
+    <string name="footer_license">MIT · inspiriert von Kilo Code</string>
+    <string name="footer_version">v0.1.0 · M0</string>
+</resources>
