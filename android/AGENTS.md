@@ -53,3 +53,12 @@ unberührt und bleibt Ziel der Roadmap.
 Keine Build-Ausgaben einchecken (`build/`, `*.apk`, `local.properties`).
 Der Debug-Smoke-Test aus M1.1 (`app/src/debug/`) wird ebenfalls nur über CI
 gebaut; die Debug-Binaries liegen im Repo, das APK nicht.
+
+## Branch-Regel
+
+- **Nie direkt auf `main` pushen.** Jede Änderung läuft auf einem eigenen Branch
+  nach dem Muster `android/<thema>`, zum Beispiel `android/m1.1-proot-smoke`.
+- Push immer mit explizitem Zielbranch (`cloud_git push` mit `branch=<name>`),
+  nie mit dem Default.
+- `main` bleibt sauber und bekommt Änderungen nur über einen bewussten Merge.
+- Der M1.1-Stand liegt auf `android/m1.1-proot-smoke`.
