@@ -2,7 +2,22 @@
 
 Standalone, native Android coding agent. The agent runs on the phone; every Android build runs on GitHub Actions.
 
-This directory contains M3: an encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. M0's Compose shell and M1/M2 provider, account, agent, workspace, and session layers remain the base.
+This directory contains M0–M3 and the preparation for Phase 1. M3 is the encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. Phase 1 prepares the on-device build of arbitrary Android projects with PRoot; M1.0 is decided and the M1.1 smoke test is built and packaged, but it has not run on the phone yet.
+
+## Status
+
+| Stage | Scope | State |
+|---|---|---|
+| M0 | Gradle scaffold, Compose shell, CI build, installable debug APK | done |
+| M1 | Provider catalog, encrypted accounts, rotation, streaming chat | done |
+| M2 | Agent loop, workspace tools, sessions, compaction | done |
+| M3 | GitHub PAT, push, Actions dispatch, logs, artifact install | done |
+| Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
+| Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | harness built in CI; device run open |
+| Phase 1 · M1.2–M1.6 | Toolchain pack, hello build, multi-project, app integration, hardening | planned |
+| M4 | German/English polish, self-update, rollback, release signing | open |
+
+The binding rules for agents live in [`AGENTS.md`](AGENTS.md): builds only on GitHub Actions, changes only on `android/<topic>` branches, and the README is updated with every push.
 
 ## M3 features
 
@@ -39,7 +54,7 @@ The repository must already exist. The workflow file must exist on the selected 
 4. Refresh runs, select a run, and load its logs or artifacts.
 5. Install the APK artifact. Android may ask for permission to install apps from KiloCoder.
 
-The push uses the tree, commit, and reference endpoints. It sends a complete snapshot; files missing from the workspace are deleted from the new tree. Binary files, ignored directories, files over 1 MB, and snapshots over 5 MB are skipped. A run’s logs are capped at 50 MB compressed and 200,000 displayed characters.
+The push uses the tree, commit, and reference endpoints. It sends a complete snapshot; files missing from the workspace are deleted from the new tree. Binary files, ignored directories, files over 1 MB, and snapshots over 5 MB are skipped. A run's logs are capped at 50 MB compressed and 200,000 displayed characters.
 
 ## M2 features
 
@@ -78,7 +93,9 @@ OkHttp is pinned to 5.4.0: 5.5.1 requires `compileSdk 37`, while 5.4.0 is the ne
 
 ## Build
 
-Builds are intentionally remote. The phone does not need a JDK, the Android SDK, or Gradle.
+Builds are intentionally remote. Neither the phone nor the development environment needs a JDK, the Android SDK, or Gradle.
+
+`.github/workflows/android.yml` runs on push and pull request with changes under `android/**`, and manually through `workflow_dispatch`:
 
 ```sh
 # On CI, after checkout:
@@ -87,11 +104,49 @@ gradle :app:testDebugUnitTest
 gradle :app:assembleDebug -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="0.1.$GITHUB_RUN_NUMBER"
 ```
 
-The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocoder-debug-apk` artifact.
+The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocoder-debug-apk` artifact. Because the version name is derived from the run number, a CI build from run 13 is `0.1.13`.
 
-Local builds of this app are not part of the workflow. Every build — debug APK, unit tests, lint — runs on GitHub Actions through `.github/workflows/android.yml`, and the APK comes from the run's artifact. The binding rule for agents and contributors is in [`AGENTS.md`](AGENTS.md).
+Local builds of this app are not part of the workflow. Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
 
-Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
+## Branching
+
+- `main` is the integration branch and is not pushed to directly.
+- Every change runs on `android/<topic>`, for example `android/m1.1-proot-smoke`.
+- Pushes name the target branch explicitly.
+- The README is updated in the same commit as the change that moves the project state.
+
+## Phase 1: building other Android projects on the phone
+
+Phase 1 proves and integrates one local debug build for supported Android-Gradle projects: the user picks a project, taps **Build**, the app builds it with real Gradle inside a PRoot container, and the Android installer opens for the debug APK. KiloCoder itself is one fixture, not the boundary.
+
+Decisions are recorded in [`PHASE1_M1_0_DECISIONS.md`](PHASE1_M1_0_DECISIONS.md); the full plan is [`PHASE1_LOCAL_BUILD_PLAN.md`](PHASE1_LOCAL_BUILD_PLAN.md).
+
+| Topic | Decision |
+|---|---|
+| Rootfs | Debian 12 bookworm arm64, `debian-bookworm-aarch64-pd-v4.7.0.tar.xz`, 42.894.344 bytes, SHA-256 `4baa3228…b8df8` |
+| Delivery format | one `tar.zst`, extracted with symlink, hardlink and mode preservation |
+| Bitness | arm64 only, no root |
+| Toolchain | Gradle 8.14.3, JDK 17, AGP 8.7.3–8.13.2, compileSdk 35/36, build-tools 35.0.0 |
+| Projects | `settings.gradle*`, application module `:app`, `assembleDebug`, no NDK/Flutter/React Native |
+| Hosting | GitHub Releases with component-wise assets and pinned SHA-256 |
+
+### M1.1 smoke test
+
+`app/src/debug/` contains a debug-only activity that appears as a second launcher entry, **M1.1 PRoot-Test**. It downloads the pinned rootfs, extracts it, starts PRoot from `nativeLibraryDir`, and checks the PRoot assumptions: `--version`, guest `echo`, `readlink /bin/sh`, guest `bash`, `uname -m`/`PAGE_SIZE`, exit-code propagation, 16-KB ELF alignment, and cancellation. The optional steps install `openjdk-17-jre-headless` in the guest and run `java -version`.
+
+The PRoot binaries (PRoot, loader, talloc, android-shmem) are pinned Termux packages with recorded SHA-256 hashes; [`tools/m1_1/BINARIES.md`](tools/m1_1/BINARIES.md) documents provenance, the `LD_PRELOAD` workaround for `libtalloc.so.2`, and the GPL-2.0 note. M1.2 replaces them with an own NDK r28 build.
+
+The device run has not happened yet, so the Go/No-Go for PRoot under `targetSdk 36` is open. Install steps, expected output and failure modes are in [`PHASE1_M1_1_RUNBOOK.md`](PHASE1_M1_1_RUNBOOK.md). The release APK never contains the smoke activity or the PRoot libraries.
+
+### Test fixtures
+
+Three projects cover the toolchain corridor:
+
+| Fixture | AGP | compileSdk | Role |
+|---|---|---|---|
+| `test-fixtures/hello-local-build` | 8.13.2 | 36 | first real build, upper edge |
+| `test-fixtures/generic-sdk35` | 8.7.3 | 35 | lower edge, "not only KiloCoder" |
+| `android/` itself | 8.13.2 | 36 | real app with Compose, Room/KSP, OkHttp |
 
 ## M3 end-to-end test
 
@@ -174,28 +229,39 @@ The workspace is app-private. It is not shared storage, and the app does not req
 
 ```text
 android/
+  AGENTS.md                    project rules: CI-only builds, branches, README upkeep
+  README.md                    this file
+  PHASE1_LOCAL_BUILD_PLAN.md   Phase 1 plan and milestones
+  PHASE1_M1_0_DECISIONS.md     rootfs, toolchain, fixtures, M1.1 acceptance
+  PHASE1_M1_1_RUNBOOK.md       install, run and evaluate the PRoot smoke test
   app/src/main/java/com/kilocoder/android/
-    KiloCoderApp.kt              Application entry point
-    MainActivity.kt              Compose host activity
-    AppContainer.kt              Room, crypto, clients, repositories, agent, GitHub
-    data/agent/                  Agent loop, workspace tools, compaction
-    data/crypto/                 Keystore-backed AES-GCM secret box
-    data/db/                     Accounts, policies, sessions, GitHub config, DAOs
-    data/github/                 GitHub API, push, runs, logs, artifacts, live E2E test
-    data/install/                Scoped APK installer intent
-    data/provider/               Catalog, protocol clients, SSE parsers, tool schemas
-    data/repo/                   Account CRUD, streaming chat, session persistence
-    data/workspace/              Sandboxed workspace file operations and snapshots
-    domain/account/              Rotation modes and account selector
-    ui/AppRoot.kt                Bottom navigation and editor host
-    ui/accounts/                 Overview, provider detail, editor
-    ui/chat/                     Agent ViewModel, chat screen, sessions dialog
-    ui/github/                   GitHub connection, build, run, log, artifact UI
-    ui/settings/                 Security, workspace, local data, and about
-    ui/theme/                    Color, type, and Material 3 theme
-  app/src/main/res/              Strings (en/de), launcher icon, platform theme
+    KiloCoderApp.kt            Application entry point
+    MainActivity.kt            Compose host activity
+    AppContainer.kt            Room, crypto, clients, repositories, agent, GitHub
+    data/agent/                Agent loop, workspace tools, compaction
+    data/crypto/               Keystore-backed AES-GCM secret box
+    data/db/                   Accounts, policies, sessions, GitHub config, DAOs
+    data/github/               GitHub API, push, runs, logs, artifacts, live E2E test
+    data/install/              Scoped APK installer intent
+    data/provider/             Catalog, protocol clients, SSE parsers, tool schemas
+    data/repo/                 Account CRUD, streaming chat, session persistence
+    data/workspace/            Sandboxed workspace file operations and snapshots
+    domain/account/            Rotation modes and account selector
+    ui/AppRoot.kt              Bottom navigation and editor host
+    ui/accounts/               Overview, provider detail, editor
+    ui/chat/                   Agent ViewModel, chat screen, sessions dialog
+    ui/github/                 GitHub connection, build, run, log, artifact UI
+    ui/settings/               Security, workspace, local data, and about
+    ui/theme/                  Color, type, and Material 3 theme
+  app/src/debug/               M1.1 smoke test, debug builds only
+    AndroidManifest.xml        second launcher entry, extractNativeLibs
+    java/.../m11/              smoke activity, runner, PRoot engine, tar.xz extractor, ELF check
+    jniLibs/arm64-v8a/         PRoot, loader, talloc, android-shmem
+  app/src/main/res/            Strings (en/de), launcher icon, platform theme
+  test-fixtures/               hello-local-build and generic-sdk35
+  tools/m1_1/BINARIES.md       provenance and hashes of the PRoot binaries
   .github/workflows/android.yml  CI build at the repository root
-  .github/workflows/android-m3-e2e.yml  Manual live GitHub E2E at the repository root
+  .github/workflows/android-m3-e2e.yml  manual live GitHub E2E
 ```
 
 ## Security notes
@@ -207,14 +273,19 @@ android/
 - APK downloads are written only under `cacheDir/github`; the `FileProvider` exposes that directory only. The user must confirm every install in the system installer.
 - Tool arguments, model output, logs, and artifact names are untrusted. The app applies size limits and path checks before handling them.
 - The app is a separate package (`com.kilocoder.android`) and does not use Kilo Code branding.
+- PRoot is not a security sandbox. A Phase 1 build runs under the app's own UID and can read app files it knows about; the plan therefore mounts only the project, the SDK and a separate Gradle home, and never mounts API keys, PATs or keystores.
 - Portions of the agent design are derived from Kilo Code and OpenCode, both MIT licensed.
 
 ## Roadmap
 
-| Milestone | Scope |
-|---|---|
-| M0 | Gradle scaffold, Compose shell, CI build, installable debug APK |
-| M1 | Provider catalog, encrypted multi-account storage, rotation, streaming chat |
-| M2 | Agent loop, file tools, app-private workspace, sessions, compaction |
-| M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install |
-| M4 | German/English polish, self-update, rollback, release signing |
+| Milestone | Scope | State |
+|---|---|---|
+| M0 | Gradle scaffold, Compose shell, CI build, installable debug APK | done |
+| M1 | Provider catalog, encrypted multi-account storage, rotation, streaming chat | done |
+| M2 | Agent loop, file tools, app-private workspace, sessions, compaction | done |
+| M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
+| Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
+| Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | device run open |
+| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | planned |
+| Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
+| M4 | German/English polish, self-update, rollback, release signing | open |

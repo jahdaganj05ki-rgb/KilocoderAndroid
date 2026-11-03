@@ -62,3 +62,13 @@ gebaut; die Debug-Binaries liegen im Repo, das APK nicht.
   nie mit dem Default.
 - `main` bleibt sauber und bekommt Änderungen nur über einen bewussten Merge.
 - Der M1.1-Stand liegt auf `android/m1.1-proot-smoke`.
+
+## README-Regel
+
+- Bei **jedem Push** wird `android/README.md` auf den aktuellen Stand
+  nachgezogen: erledigte Meilensteine, offene Punkte, Build- und Branch-Regeln,
+  Toolchain, Struktur und Roadmap.
+- Das README beschreibt den Ist-Stand, nicht den Plan; Details bleiben in den
+  `PHASE1_*`-Dokumenten.
+- Die README-Änderung gehört in denselben Commit wie die Änderung, die den Stand
+  verschiebt.
