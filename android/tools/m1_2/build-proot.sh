@@ -89,8 +89,10 @@ fetch "https://github.com/termux/libandroid-shmem/archive/refs/tags/v${SHMEM_VER
     "libandroid-shmem.tar.gz" "$SHMEM_SHA256"
 tar xf libandroid-shmem.tar.gz
 cd "libandroid-shmem-${SHMEM_VERSION}"
+# Bionic's <paths.h> has no _PATH_TMP. Named SysV keys are not used in
+# Phase 1; the glibc default only satisfies the compile-time reference.
 make CC="$CC" \
-    CFLAGS="-fpic -std=c11 -Wall -Wextra -O2" \
+    CFLAGS="-fpic -std=c11 -Wall -Wextra -O2 -D_PATH_TMP=\"/tmp/\"" \
     LDFLAGS="-Wl,--version-script=exports.txt -Wl,-z,max-page-size=${PAGE_SIZE} -Wl,-z,common-page-size=${PAGE_SIZE}" \
     libandroid-shmem.so
 make install DESTDIR="$WORK/shmem-prefix" PREFIX=/usr

@@ -31,7 +31,8 @@ einschränken.
 2. talloc mit `--cross-compile` und `cross-answers.txt` bauen; die Datei ist
    aus dem Termux-`libtalloc`-Paket für dieselbe Version übernommen.
 3. `libandroid-shmem.so` mit Version-Skript bauen und nach
-   `shmem-prefix/usr` installieren, inklusive `sys/shm.h`.
+   `shmem-prefix/usr` installieren, inklusive `sys/shm.h`. Bionic definiert
+   `_PATH_TMP` nicht, deshalb wird es als `/tmp/` übergeben.
 4. PRoot mit `PROOT_WITH_LIBANDROID_SHMEM=true`, `-ltalloc` und
    `-landroid-shmem` bauen. `-I` auf das shmem-Prefix stellt sicher, dass
    `<sys/shm.h>` die Emulation und nicht den Bionic-Stub trifft.
@@ -54,6 +55,10 @@ Smoke-Test brauchen keine Änderung.
   APK enthält damit den NDK-Build.
 - Ein echter 16-KB-Lauf auf Hardware bleibt Phase 2. Geprüft wird statisch,
   wie in Abschnitt 3.7 des Plans festgelegt.
+- `_PATH_TMP` zeigt auf `/tmp/`, weil Bionic den Pfad nicht definiert. Er wird
+  nur für benannte SysV-Schlüssel (nicht `IPC_PRIVATE`) benutzt, die Phase 1
+  nicht braucht. Ein umgebungsbasierter Pfad gehört zu M1.5, sobald die App
+  den Temp-Pfad vorgibt.
 - Bericht und Bibliotheken liegen als Artefakt `proot-ndk-r28` am Lauf.
 
 ## Lizenzen
