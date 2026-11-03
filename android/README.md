@@ -122,6 +122,24 @@ The workflow stops after downloading and uploading the APK. Emulator installatio
 
 The test class is skipped in normal `testDebugUnitTest` runs. The workflow tests the GitHub API path and downloads the APK; the in-app Install button and the Android package-installer dialog remain a manual device check.
 
+### Manual APK installation and screenshot
+
+Use a device or emulator with USB debugging enabled.
+
+1. Download the `m3-e2e-apk` artifact from the workflow run and extract `kilocoder-debug.apk`.
+2. Install the APK:
+   ```sh
+   adb install -r kilocoder-debug.apk
+   ```
+   Alternatively, open the APK on the device and confirm the Android package-installer dialog.
+3. Launch **KiloCoder** and confirm that the app stays open. The first screen may be the setup screen; this check does not require an account.
+4. Capture the screen and the app log:
+   ```sh
+   adb exec-out screencap -p > m3-e2e.png
+   adb logcat -d > logcat.txt
+   ```
+5. Verify that `logcat.txt` contains no `FATAL EXCEPTION` or crash from `com.kilocoder.android`, then attach `m3-e2e.png` and `logcat.txt` to the test notes.
+
 If cleanup fails because `delete_repo` or `Administration` write is missing, the run fails and the private temporary repository remains. Delete it manually or re-run with the required scope.
 
 ## Agent loop
