@@ -119,7 +119,13 @@ class GitHubApi(private val http: OkHttpClient = ProviderHttp.client) {
         message: String,
         files: List<WorkspaceFile>,
     ): GitHubPush = withContext(Dispatchers.IO) {
-        val parent = ref(token, owner, repo, branch)
+        var parent = ref(token, owner, repo, branch)
+        if (parent == null) {
+            // GitHub's Git Data API rejects tree creation until the repository has a commit.
+            seed(token, owner, repo, branch)
+            parent = ref(token, owner, repo, branch)
+                ?: throw GitHubException("GitHub did not create branch $branch.")
+        }
         val tree = body(
             token = token,
             method = "POST",
@@ -148,33 +154,34 @@ class GitHubApi(private val http: OkHttpClient = ProviderHttp.client) {
                 put("message", message)
                 put("tree", treeSha)
                 putJsonArray("parents") {
-                    if (parent != null) add(JsonPrimitive(parent))
+                    add(JsonPrimitive(parent))
                 }
             },
         )
         val commitSha = json.decodeFromString<GitHubCommit>(commit).sha
-        if (parent == null) {
-            body(
-                token = token,
-                method = "POST",
-                path = "/repos/${seg(owner)}/${seg(repo)}/git/refs",
-                payload = buildJsonObject {
-                    put("ref", "refs/heads/$branch")
-                    put("sha", commitSha)
-                },
-            )
-        } else {
-            body(
-                token = token,
-                method = "PATCH",
-                path = "/repos/${seg(owner)}/${seg(repo)}/git/refs/heads/${path(branch)}",
-                payload = buildJsonObject {
-                    put("sha", commitSha)
-                    put("force", false)
-                },
-            )
-        }
+        body(
+            token = token,
+            method = "PATCH",
+            path = "/repos/${seg(owner)}/${seg(repo)}/git/refs/heads/${path(branch)}",
+            payload = buildJsonObject {
+                put("sha", commitSha)
+                put("force", false)
+            },
+        )
         GitHubPush(commitSha, treeSha, branch, files.size)
+    }
+
+    private fun seed(token: String, owner: String, repo: String, branch: String) {
+        body(
+            token = token,
+            method = "PUT",
+            path = "/repos/${seg(owner)}/${seg(repo)}/contents/.kilocoder-init",
+            payload = buildJsonObject {
+                put("message", "Initialize KiloCoder workspace")
+                put("content", "Cg==")
+                put("branch", branch)
+            },
+        )
     }
 
     suspend fun dispatch(

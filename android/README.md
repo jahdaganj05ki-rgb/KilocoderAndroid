@@ -9,7 +9,7 @@ This directory contains M3: an encrypted GitHub PAT connection, workspace push t
 - One encrypted GitHub connection with owner, repository, branch, workflow file, and login.
 - PAT validation against `GET /user` and the selected repository before anything is stored.
 - Workspace push as one Git commit through the GitHub Git Data API. No git binary is bundled, and no shell runs on the phone.
-- Empty repositories are supported with an initial root commit and branch reference. Existing branches receive a fast-forward commit.
+- Empty repositories are initialized with a bootstrap commit, then receive the workspace commit. Existing branches receive a fast-forward commit.
 - Workflow dispatch for the configured branch and workflow file.
 - Latest 15 workflow runs for the branch, with status, conclusion, run number, commit SHA, and timestamps.
 - Build-log download from the run logs endpoint, ZIP extraction, and a 200,000-character display cap.
