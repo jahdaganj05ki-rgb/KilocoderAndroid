@@ -16,6 +16,7 @@ This directory contains M3: an encrypted GitHub PAT connection, workspace push t
 - Artifact listing and APK download from the selected run. The system installer is opened through a scoped `FileProvider` URI.
 - Sensitive files are never pushed: `.env` files, `local.properties`, keystores, private keys, and common certificate files are skipped.
 - English and German UI strings.
+- A manual GitHub Actions E2E workflow that pushes, dispatches, reads logs, downloads an APK, and installs it on an emulator against a disposable test repository.
 
 ## GitHub token
 
@@ -93,6 +94,36 @@ cd android
 gradle :app:testDebugUnitTest :app:assembleDebug
 ```
 
+## M3 end-to-end test
+
+The manual workflow `.github/workflows/android-m3-e2e.yml` exercises the real GitHub path without putting a token in the repository or chat. It uses the repository secret `KILOCODER_E2E_PAT` only in the API job and creates a private, disposable repository for each run.
+
+Required secret:
+
+- Classic PAT: `repo`, `workflow`, and `delete_repo`.
+- Fine-grained PAT: `Contents` read/write, `Actions` read/write, and `Administration` read/write, with access that can create the new temporary repository. A classic PAT is simpler because the temporary repository does not exist when the token is configured.
+
+Select **Actions → android-m3-e2e → Run workflow**, or run:
+
+```sh
+gh workflow run android-m3-e2e.yml
+```
+
+GitHub exposes `workflow_dispatch` in the Actions UI only when this workflow file is on the repository's default branch. On a feature branch, merge or push the workflow to the default branch first.
+
+The API job:
+
+1. Creates `kilocoder-m3-e2e-<run-id>-<attempt>` under the PAT owner.
+2. Builds a temporary workspace from the current `android/` tree and `.github/workflows/android.yml`. The copied workflow keeps only `workflow_dispatch` so the push does not start a duplicate build.
+3. Runs `M3E2eTest` against the production `GitHubApi`: validates the PAT and repository, pushes the snapshot as a root commit to the repository's default branch, dispatches the Android workflow, waits for the run, downloads the logs, and downloads the APK artifact.
+4. Uploads `m3-e2e-report` and `m3-e2e-apk`, then deletes the temporary repository unless `keep_repo` is enabled.
+
+The install job boots an Android 15 emulator, installs the downloaded APK with `adb install`, verifies the package, launches `MainActivity`, and uploads a screenshot and logcat as `m3-e2e-emulator`.
+
+The test class is skipped in normal `testDebugUnitTest` runs. The workflow tests the GitHub API path and system-level APK installation; it does not script the in-app Install button or the Android package-installer dialog. Those remain a manual device check.
+
+If cleanup fails because `delete_repo` or `Administration` write is missing, the run fails and the private temporary repository remains. Delete it manually or re-run with the required scope.
+
 ## Agent loop
 
 1. The ViewModel sends the visible history plus a workspace-aware system prompt to `AgentRepository`.
@@ -133,7 +164,7 @@ android/
     data/agent/                  Agent loop, workspace tools, compaction
     data/crypto/                 Keystore-backed AES-GCM secret box
     data/db/                     Accounts, policies, sessions, GitHub config, DAOs
-    data/github/                 GitHub API, push, runs, logs, artifacts
+    data/github/                 GitHub API, push, runs, logs, artifacts, live E2E test
     data/install/                Scoped APK installer intent
     data/provider/               Catalog, protocol clients, SSE parsers, tool schemas
     data/repo/                   Account CRUD, streaming chat, session persistence
@@ -147,6 +178,7 @@ android/
     ui/theme/                    Color, type, and Material 3 theme
   app/src/main/res/              Strings (en/de), launcher icon, platform theme
   .github/workflows/android.yml  CI build at the repository root
+  .github/workflows/android-m3-e2e.yml  Manual live GitHub E2E at the repository root
 ```
 
 ## Security notes

@@ -1,0 +1,258 @@
+# kilocode_change - new file
+name: android-m3-e2e
+
+on:
+  # Temporary trigger for the first live run. Remove after the E2E run.
+  push:
+    branches:
+      - m3-e2e-run
+  workflow_dispatch:
+    inputs:
+      keep_repo:
+        description: Keep the temporary GitHub repository for debugging
+        required: false
+        default: false
+        type: boolean
+
+run-name: Android M3 E2E
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-m3-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  api:
+    name: push, dispatch, logs, artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Require the test PAT
+        env:
+          TOKEN: ${{ secrets.KILOCODER_E2E_PAT }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Add the repository secret KILOCODER_E2E_PAT. Use a dedicated test PAT with repo, workflow, and delete_repo scopes."
+            exit 1
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.14.3"
+          cache-provider: basic
+
+      - name: Create temporary repository
+        env:
+          GH_TOKEN: ${{ secrets.KILOCODER_E2E_PAT }}
+        run: |
+          set -euo pipefail
+          OWNER="$(gh api user --jq .login)"
+          REPO="kilocoder-m3-e2e-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if gh repo view "$OWNER/$REPO" >/dev/null 2>&1; then
+            echo "::error::Temporary repository already exists: $OWNER/$REPO"
+            exit 1
+          fi
+          gh repo create "$OWNER/$REPO" --private \
+            --description "Temporary KiloCoder M3 E2E repository"
+          E2E_BRANCH="$(gh api "repos/$OWNER/$REPO" --jq '.default_branch // "main"')"
+          if [ -z "$E2E_BRANCH" ] || [ "$E2E_BRANCH" = "null" ]; then
+            E2E_BRANCH=main
+          fi
+          {
+            echo "OWNER=$OWNER"
+            echo "REPO=$REPO"
+            echo "E2E_BRANCH=$E2E_BRANCH"
+            echo "REPO_CREATED=true"
+          } >> "$GITHUB_ENV"
+          echo "Temporary repository: https://github.com/$OWNER/$REPO (branch $E2E_BRANCH)"
+
+      - name: Prepare the pushed workspace
+        run: |
+          set -euo pipefail
+          WORKSPACE="$RUNNER_TEMP/m3-workspace"
+          rm -rf "$WORKSPACE"
+          mkdir -p "$WORKSPACE"
+          git archive --format=tar HEAD android .github/workflows/android.yml \
+            | tar -xf - -C "$WORKSPACE"
+          rm -rf \
+            "$WORKSPACE/android/build" \
+            "$WORKSPACE/android/app/build" \
+            "$WORKSPACE/android/.gradle" \
+            "$WORKSPACE/android/.kotlin" \
+            "$WORKSPACE/android/local.properties"
+          test -f "$WORKSPACE/.github/workflows/android.yml"
+          test -f "$WORKSPACE/android/settings.gradle.kts"
+          # The temporary repository should only create the run through dispatch.
+          # Drop the push and pull_request triggers from the copied production workflow.
+          WORKFLOW="$WORKSPACE/.github/workflows/android.yml"
+          awk '
+            /^on:/ { print "on:"; print "  workflow_dispatch:"; skip=1; next }
+            skip && /^permissions:/ { skip=0 }
+            !skip { print }
+          ' "$WORKFLOW" > "$WORKFLOW.e2e"
+          mv "$WORKFLOW.e2e" "$WORKFLOW"
+          grep -q '^  workflow_dispatch:$' "$WORKFLOW"
+          if grep -q '^  push:$' "$WORKFLOW"; then
+            echo "::error::The temporary workflow still has a push trigger."
+            exit 1
+          fi
+          echo "WORKSPACE=$WORKSPACE" >> "$GITHUB_ENV"
+          printf 'Workspace: %s files, %s bytes\n' \
+            "$(find "$WORKSPACE" -type f | wc -l)" \
+            "$(du -sb "$WORKSPACE" | cut -f1)"
+
+      - name: Run live M3 E2E
+        env:
+          KILOCODER_E2E: "1"
+          KILOCODER_E2E_TOKEN: ${{ secrets.KILOCODER_E2E_PAT }}
+          KILOCODER_E2E_WORKFLOW: android.yml
+        working-directory: android
+        run: |
+          set -o pipefail
+          export KILOCODER_E2E_OWNER="$OWNER"
+          export KILOCODER_E2E_REPO="$REPO"
+          export KILOCODER_E2E_BRANCH="$E2E_BRANCH"
+          export KILOCODER_E2E_WORKSPACE="$WORKSPACE"
+          export KILOCODER_E2E_OUTPUT="$GITHUB_WORKSPACE/e2e-artifacts"
+          mkdir -p "$KILOCODER_E2E_OUTPUT"
+          gradle :app:testDebugUnitTest \
+            --tests com.kilocoder.android.data.github.M3E2eTest \
+            --stacktrace 2>&1 | tee "$KILOCODER_E2E_OUTPUT/gradle.log"
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "### Android M3 E2E"
+            echo ""
+            if [ -n "${OWNER:-}" ] && [ -n "${REPO:-}" ]; then
+              echo "- Temporary repository: https://github.com/${OWNER}/${REPO}"
+            fi
+            if [ "${{ github.event.inputs.keep_repo }}" = "true" ] && [ -n "${REPO:-}" ]; then
+              echo "- Repository kept for debugging (delete it manually)."
+            fi
+            echo "- API job result: ${{ job.status }}"
+            if [ -f e2e-artifacts/summary.md ]; then
+              echo ""
+              cat e2e-artifacts/summary.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: m3-e2e-report
+          path: e2e-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload downloaded APK
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: m3-e2e-apk
+          path: e2e-artifacts/*.apk
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Delete temporary repository
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.KILOCODER_E2E_PAT }}
+        run: |
+          set -euo pipefail
+          if [ "${REPO_CREATED:-false}" != "true" ] || [ "${{ github.event.inputs.keep_repo }}" = "true" ]; then
+            echo "Temporary repository cleanup skipped."
+            exit 0
+          fi
+          case "${REPO:-}" in
+            kilocoder-m3-e2e-*) ;;
+            *)
+              echo "::error::Refusing to delete unexpected repository: ${OWNER:-?}/${REPO:-?}"
+              exit 1
+              ;;
+          esac
+          if gh repo view "$OWNER/$REPO" >/dev/null 2>&1; then
+            gh repo delete "$OWNER/$REPO" --yes
+            echo "Deleted temporary repository: $OWNER/$REPO"
+          else
+            echo "Temporary repository already absent: $OWNER/$REPO"
+          fi
+
+  install:
+    name: install artifact on emulator
+    needs: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download the APK artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: m3-e2e-apk
+          path: e2e-apk
+
+      - name: Select the APK
+        run: |
+          set -euo pipefail
+          APK="$(find e2e-apk -type f -name '*.apk' -print -quit)"
+          if [ -z "$APK" ]; then
+            echo "::error::The API job did not upload an APK."
+            exit 1
+          fi
+          cp "$APK" "$GITHUB_WORKSPACE/m3-e2e.apk"
+          printf 'Installing %s (%s bytes)\n' \
+            "$GITHUB_WORKSPACE/m3-e2e.apk" \
+            "$(stat -c%s "$GITHUB_WORKSPACE/m3-e2e.apk")"
+
+      - name: Boot emulator and install
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set -eo pipefail
+            adb install -r "$GITHUB_WORKSPACE/m3-e2e.apk"
+            adb shell pm list packages | grep -qx "package:com.kilocoder.android"
+            adb logcat -c
+            adb shell am start -W -n com.kilocoder.android/.MainActivity
+            sleep 5
+            if ! adb shell pidof com.kilocoder.android; then
+              adb logcat -d -t 400 > "$GITHUB_WORKSPACE/logcat.txt"
+              echo "::error::KiloCoder did not stay running after launch."
+              exit 1
+            fi
+            adb exec-out screencap -p > "$GITHUB_WORKSPACE/m3-e2e.png"
+            adb logcat -d -t 200 > "$GITHUB_WORKSPACE/logcat.txt"
+
+      - name: Upload emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: m3-e2e-emulator
+          path: |
+            m3-e2e.png
+            m3-e2e.apk
+            logcat.txt
+          if-no-files-found: warn
+          retention-days: 7
