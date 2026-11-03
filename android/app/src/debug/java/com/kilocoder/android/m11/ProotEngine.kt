@@ -22,6 +22,7 @@ class ProotEngine(
     private val loader = File(native, "libproot-loader.so")
     private val proot = File(native, "libproot.so")
     private val talloc = File(native, "libtalloc.so")
+    private val libs = File(work.parentFile, "lib")
 
     fun missingLibraries(): List<String> =
         listOf(proot, loader, talloc, File(native, "libandroid-shmem.so"))
@@ -128,10 +129,13 @@ class ProotEngine(
         env.clear()
         env["PROOT_LOADER"] = loader.absolutePath
         env["PROOT_TMP_DIR"] = File(work, "tmp").apply { mkdirs() }.absolutePath
-        env["LD_LIBRARY_PATH"] = native.absolutePath
         // libtalloc.so heißt im APK ohne Versionssuffix; proot verlangt libtalloc.so.2.
-        // Ein Preload registriert die SONAME und erfüllt damit das DT_NEEDED.
-        env["LD_PRELOAD"] = talloc.absolutePath
+        // Eine Kopie unter dem SONAME im privaten Verzeichnis erfüllt das DT_NEEDED,
+        // ohne LD_PRELOAD an den Guest zu vererben.
+        libs.mkdirs()
+        val link = File(libs, "libtalloc.so.2")
+        talloc.copyTo(link, overwrite = true)
+        env["LD_LIBRARY_PATH"] = listOf(libs.absolutePath, native.absolutePath).joinToString(":")
         env["HOME"] = "/root"
         env["TMPDIR"] = File(work, "tmp").absolutePath
         if (rootfs != null && !rootfs.isDirectory) {

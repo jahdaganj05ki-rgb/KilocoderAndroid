@@ -371,7 +371,7 @@ Wichtige Regeln:
 - `--no-daemon` gilt für den ersten Test. Eine warme Daemon-Variante wird erst nach Messung geprüft; ein Daemon muss beim Abbruch mit beendet werden.
 - `local.properties` wird im Build-Projekt mit `sdk.dir=/opt/android-sdk` neu geschrieben.
 - `android.aapt2FromMavenOverride` wird in `$HOME/.gradle/gradle.properties` gesetzt.
-- `LD_PRELOAD` wird geleert.
+- `LD_PRELOAD` wird nicht gesetzt; `libtalloc.so.2` liegt als Kopie im privaten Verzeichnis.
 - `PROOT_TMP_DIR` liegt nicht auf `/sdcard`.
 - Der Prozess wird mit `--kill-on-exit` gestartet; die App beendet bei Abbruch zusätzlich den Prozessbaum.
 

@@ -134,7 +134,7 @@ Decisions are recorded in [`PHASE1_M1_0_DECISIONS.md`](PHASE1_M1_0_DECISIONS.md)
 
 `app/src/debug/` contains a debug-only activity that appears as a second launcher entry, **M1.1 PRoot-Test**. It downloads the pinned rootfs, extracts it, starts PRoot from `nativeLibraryDir`, and checks the PRoot assumptions: `--version`, guest `echo`, `readlink /bin/sh`, guest `bash`, `uname -m`/`PAGE_SIZE`, exit-code propagation, 16-KB ELF alignment, and cancellation. The optional steps install `openjdk-17-jre-headless` in the guest and run `java -version`.
 
-The PRoot binaries (PRoot, loader, talloc, android-shmem) are pinned Termux packages with recorded SHA-256 hashes; [`tools/m1_1/BINARIES.md`](tools/m1_1/BINARIES.md) documents provenance, the `LD_PRELOAD` workaround for `libtalloc.so.2`, and the GPL-2.0 note. M1.2 replaces them with an own NDK r28 build.
+The PRoot binaries (PRoot, loader, talloc, android-shmem) are pinned Termux packages with recorded SHA-256 hashes; [`tools/m1_1/BINARIES.md`](tools/m1_1/BINARIES.md) documents provenance, the private `libtalloc.so.2` copy used to satisfy the SONAME, and the GPL-2.0 note. M1.2 replaces them with an own NDK r28 build.
 
 The device run has not happened yet, so the Go/No-Go for PRoot under `targetSdk 36` is open. Install steps, expected output and failure modes are in [`PHASE1_M1_1_RUNBOOK.md`](PHASE1_M1_1_RUNBOOK.md). The release APK never contains the smoke activity or the PRoot libraries.
 

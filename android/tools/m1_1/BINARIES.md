@@ -45,9 +45,11 @@ Geprüft mit `readelf`:
 
 1. **`libtalloc.so` heißt im APK ohne Versionssuffix.** Android packt aus
    `jniLibs` nur Dateien, die auf `.so` enden, also kann `libtalloc.so.2`
-   nicht direkt mitgeliefert werden. `ProotEngine` setzt deshalb
-   `LD_PRELOAD=nativeLibraryDir/libtalloc.so`; die Bibliothek registriert ihre
-   SONAME `libtalloc.so.2`, womit das `DT_NEEDED` von `proot` erfüllt ist.
+   nicht direkt mitgeliefert werden. `ProotEngine` kopiert die Bibliothek
+   deshalb beim Start als `files/m11/lib/libtalloc.so.2` und setzt
+   `LD_LIBRARY_PATH=files/m11/lib:nativeLibraryDir`. Damit erfüllt die
+   SONAME `libtalloc.so.2` das `DT_NEEDED` von `proot`, ohne dass ein
+   `LD_PRELOAD`-Pfad in den Guest vererbt wird.
    Falls der Start mit „library libtalloc.so.2 not found“ scheitert, ist das
    der erste Punkt zum Nachsehen.
 2. **`libandroid-shmem.so`** braucht PRoot für `--sysvipc`. Ohne sie startet

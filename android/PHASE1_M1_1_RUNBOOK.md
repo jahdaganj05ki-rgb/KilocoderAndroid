@@ -98,7 +98,7 @@ sich über **Bericht kopieren** in die Zwischenablage holen.
 
 | Meldung | Ursache | Nächster Schritt |
 |---|---|---|
-| `library "libtalloc.so.2" not found` | `LD_PRELOAD` wurde nicht angewandt | `ProotEngine` prüfen; `libtalloc.so` muss in `nativeLibraryDir` liegen |
+| `library "libtalloc.so.2" not found` | Kopie im privaten Verzeichnis fehlt | `ProotEngine` prüfen; `libtalloc.so` muss in `nativeLibraryDir` liegen, die Kopie nach `files/m11/lib/libtalloc.so.2` muss gelingen |
 | `Permission denied` beim Start von `libproot.so` | `extractNativeLibs` nicht aktiv | Debug-Manifest und `useLegacyPackaging` prüfen |
 | `Preflight: Native Libraries — fehlen: …` | Debug-`jniLibs` nicht im APK | `src/debug/jniLibs/arm64-v8a/` und Build-Variante prüfen |
 | Build stirbt mit Signal 9 | Prozesskiller | Entwickleroption „Beschränkungen für Unterprozesse deaktivieren“ |
