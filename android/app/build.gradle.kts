@@ -43,6 +43,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // PRoot wird aus nativeLibraryDir gestartet; die .so müssen entpackt vorliegen.
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
@@ -70,6 +74,7 @@ dependencies {
     implementation(libs.okhttp.sse)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.xz)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

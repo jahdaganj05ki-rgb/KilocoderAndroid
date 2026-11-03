@@ -22,6 +22,8 @@ This directory contains M3: an encrypted GitHub PAT connection, workspace push t
 
 The PAT is encrypted with the same Android Keystore-backed AES-256-GCM box as provider keys. Only the last four characters and the GitHub login are stored in clear text.
 
+One token is intentional. GitHub does not provide an API to create PATs, and a PAT cannot grant additional access rights. The same `repo`/`workflow` token covers repository creation and Actions secrets when those API calls are added; no token broker or child tokens are required.
+
 Required permissions:
 
 - Classic PAT: `repo` and `workflow`. Add `read:org` only if the repository is owned by an organization that requires it.
@@ -87,12 +89,9 @@ gradle :app:assembleDebug -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="0.1.
 
 The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocoder-debug-apk` artifact.
 
-A local build is possible with JDK 17 and the Android SDK, but it is only a developer convenience:
+Local builds of this app are not part of the workflow. Every build — debug APK, unit tests, lint — runs on GitHub Actions through `.github/workflows/android.yml`, and the APK comes from the run's artifact. The binding rule for agents and contributors is in [`AGENTS.md`](AGENTS.md).
 
-```sh
-cd android
-gradle :app:testDebugUnitTest :app:assembleDebug
-```
+Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
 
 ## M3 end-to-end test
 

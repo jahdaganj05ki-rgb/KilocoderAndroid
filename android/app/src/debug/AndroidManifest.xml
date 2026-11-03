@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Nur im Debug-Build: PRoot braucht die .so-Dateien entpackt in nativeLibraryDir. -->
+    <application
+        android:extractNativeLibs="true"
+        tools:replace="android:extractNativeLibs">
+
+        <activity
+            android:name=".m11.M11SmokeActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="true"
+            android:label="M1.1 PRoot-Test"
+            android:theme="@style/Theme.KiloCoder">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
