@@ -108,7 +108,9 @@ unzip -q proot.zip
 cd "proot-${PROOT_VERSION}"
 export CC AR RANLIB STRIP
 export CPPFLAGS="-DARG_MAX=131072 -DVERSION='\"${PROOT_VERSION}\"' -I$WORK/talloc-prefix/include -I$WORK/shmem-prefix/usr/include"
-export CFLAGS="-O2"
+# NDK r28 turns implicit function declarations into errors. PRoot's older
+# sources omit a few <string.h> includes; keep those as warnings.
+export CFLAGS="-O2 -Wno-error=implicit-function-declaration"
 export LDFLAGS="-L$WORK/talloc-prefix/lib -L$WORK/shmem-prefix/usr/lib -Wl,-z,max-page-size=${PAGE_SIZE} -Wl,-z,common-page-size=${PAGE_SIZE}"
 export LOADER_LDFLAGS="-Wl,-z,max-page-size=${PAGE_SIZE} -Wl,-z,common-page-size=${PAGE_SIZE}"
 make -C src -j"$(nproc)" PROOT_WITH_LIBANDROID_SHMEM=true V=1

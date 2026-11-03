@@ -55,6 +55,9 @@ Smoke-Test brauchen keine Änderung.
   APK enthält damit den NDK-Build.
 - Ein echter 16-KB-Lauf auf Hardware bleibt Phase 2. Geprüft wird statisch,
   wie in Abschnitt 3.7 des Plans festgelegt.
+- PRoot wird mit `-Wno-error=implicit-function-declaration` gebaut. NDK r28
+  macht fehlende Deklarationen zum Fehler; die älteren PRoot-Quellen lassen
+  einzelne `<string.h>`-Includes aus. Die Warnungen bleiben im Log sichtbar.
 - `_PATH_TMP` zeigt auf `/tmp/`, weil Bionic den Pfad nicht definiert. Er wird
   nur für benannte SysV-Schlüssel (nicht `IPC_PRIVATE`) benutzt, die Phase 1
   nicht braucht. Ein umgebungsbasierter Pfad gehört zu M1.5, sobald die App
