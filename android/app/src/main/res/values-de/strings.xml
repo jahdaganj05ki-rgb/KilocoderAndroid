@@ -11,7 +11,7 @@
     <string name="step_apk">APK</string>
     <string name="next_title">Provider &amp; Accounts</string>
     <string name="next_body">Als Nächstes: verschlüsselte API-Keys, mehrere Konten pro Provider und automatische Account-Rotation.</string>
-    <string name="footer_license">MIT · inspiriert von Kilo Code</string>
+    <string name="footer_license">MIT</string>
     <string name="footer_version">v0.1.0 · M0</string>
 
     <string name="nav_chat">Chat</string>
@@ -185,7 +185,7 @@
     <string name="settings_clear_body">Entfernt alle Konten, verschlüsselten Keys, Cooldowns und Rotationsrichtlinien von diesem Gerät. Das kann nicht rückgängig gemacht werden.</string>
     <string name="settings_clear_confirm">Alles löschen</string>
     <string name="settings_about_title">Über KiloCoder</string>
-    <string name="settings_about_body">KiloCoder ist ein nativer Android-Coding-Agent, inspiriert von Kilo Code. Builds laufen über GitHub Actions; die App enthält kein JDK und kein Gradle.</string>
+    <string name="settings_about_body">KiloCoder ist ein nativer Android-Coding-Agent. Builds laufen über GitHub Actions; die App enthält kein JDK und kein Gradle.</string>
     <string name="settings_version">Version %1$s (%2$d)</string>
     <string name="settings_providers">Provider-Katalog: %1$d</string>
     <string name="settings_accounts">Konten: %1$d</string>

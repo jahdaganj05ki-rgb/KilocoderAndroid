@@ -272,7 +272,7 @@ android/
 - GitHub pushes omit sensitive local files and never upload the encrypted token database.
 - APK downloads are written only under `cacheDir/github`; the `FileProvider` exposes that directory only. The user must confirm every install in the system installer.
 - Tool arguments, model output, logs, and artifact names are untrusted. The app applies size limits and path checks before handling them.
-- The app is a separate package (`com.kilocoder.android`) and does not use Kilo Code branding.
+- The app is a separate package (`com.kilocoder.android`).
 - PRoot is not a security sandbox. A Phase 1 build runs under the app's own UID and can read app files it knows about; the plan therefore mounts only the project, the SDK and a separate Gradle home, and never mounts API keys, PATs or keystores.
 - Portions of the agent design are derived from Kilo Code and OpenCode, both MIT licensed.
 
