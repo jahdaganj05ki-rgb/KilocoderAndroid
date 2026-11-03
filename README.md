@@ -1,167 +1,134 @@
-<p align="center">
-  English | <a href="translations/README.zh.md">简体中文</a> | <a href="translations/README.zht.md">繁體中文</a> | <a href="translations/README.ko.md">한국어</a> | <a href="translations/README.de.md">Deutsch</a> | <a href="translations/README.es.md">Español</a> | <a href="translations/README.fr.md">Français</a> | <a href="translations/README.it.md">Italiano</a> | <a href="translations/README.da.md">Dansk</a> | <a href="translations/README.ja.md">日本語</a> | <a href="translations/README.pl.md">Polski</a> | <a href="translations/README.ru.md">Русский</a> | <a href="translations/README.bs.md">Bosanski</a> | <a href="translations/README.ar.md">العربية</a> | <a href="translations/README.no.md">Norsk</a> | <a href="translations/README.br.md">Português (Brasil)</a> | <a href="translations/README.th.md">ไทย</a> | <a href="translations/README.tr.md">Türkçe</a> | <a href="translations/README.uk.md">Українська</a> | <a href="translations/README.bn.md">বাংলা</a> | <a href="translations/README.gr.md">Ελληνικά</a> | <a href="translations/README.vi.md">Tiếng Việt</a>
-</p>
+# KiloCoder
 
-<p align="center">
-  <a href="https://kilo.ai"><img width="250" alt="Kilo Code logo" src="https://github.com/user-attachments/assets/bdb0c174-b9fd-40ad-a47b-f3aab9b54e8d" /></a>
-</p>
+KiloCoder is a native Android coding agent. It runs on the phone: you chat with a model, the agent edits an app-private workspace, and Android builds run on GitHub Actions and come back as an installable APK. No desktop, no second app, no local Android toolchain.
 
-<p align="center">The open source coding agent for building with AI in VS Code, JetBrains, or the CLI.</p>
+- Package: `com.kilocoder.android`
+- Platform: Android 11+, arm64
+- License: MIT
 
-<p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code"><img src="https://raster.shields.io/badge/VS_Code_Marketplace-007ACC?style=flat&logo=visualstudiocode&logoColor=white" alt="VS Code Marketplace" height="20"></a>
-  <a href="https://www.npmjs.com/package/@kilocode/cli"><img alt="npm" src="https://raster.shields.io/npm/v/@kilocode/cli?style=flat" height="20" /></a>
-  <a href="https://x.com/kilocode"><img src="https://raster.shields.io/badge/kilocode-000000?style=flat&logo=x&logoColor=white" alt="X (Twitter)" height="20"></a>
-  <a href="https://blog.kilo.ai"><img src="https://raster.shields.io/badge/Blog-555?style=flat&logo=substack&logoColor=white" alt="Blog" height="20"></a>
-  <a href="https://kilo.ai/discord"><img src="https://raster.shields.io/badge/Join%20Discord-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord" height="20"></a>
-  <a href="https://www.reddit.com/r/kilocode/"><img src="https://raster.shields.io/badge/Join%20r%2Fkilocode-D84315?style=flat&logo=reddit&logoColor=white" alt="Reddit" height="20"></a>
-</p>
+## Current state
 
-![Kilo-in-VS-Code-and-CLI](https://github.com/user-attachments/assets/0536ca59-ed81-4512-9e05-d186187a1b52)
+| Stage | Scope | State |
+|---|---|---|
+| M0 | Gradle scaffold, Compose shell, CI build, installable debug APK | done |
+| M1 | Provider catalog, encrypted accounts, rotation, streaming chat | done |
+| M2 | Agent loop, workspace tools, sessions, compaction | done |
+| M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
+| Phase 1 · M1.0 | Decisions, fixtures, project criteria, acceptance criteria | done |
+| Phase 1 · M1.1 | PRoot smoke test for on-device builds | harness built in CI; device run open |
+| Phase 1 · M1.2–M1.6 | Toolchain pack, hello build, multi-project build, app integration, hardening | planned |
+| M4 | German/English polish, self-update, rollback, release signing | open |
 
----
+The current Phase 1 work lives on the `android/m1.1-proot-smoke` branch. Details are in [`android/PHASE1_LOCAL_BUILD_PLAN.md`](android/PHASE1_LOCAL_BUILD_PLAN.md), [`android/PHASE1_M1_0_DECISIONS.md`](android/PHASE1_M1_0_DECISIONS.md) and [`android/PHASE1_M1_1_RUNBOOK.md`](android/PHASE1_M1_1_RUNBOOK.md).
 
-Kilo Code is an AI coding agent that meets you everywhere you work: [VS Code](https://kilo.ai/landing/vs-code), [JetBrains](https://kilo.ai/features/jetbrains-native), and the [CLI](https://kilo.ai/cli). It's open source with open pricing. You pick from 500+ models, switch between them mid-task, and pay the model provider's rate with zero markup. No API keys required to start.
+## What it does
 
-### Installation
+### Providers and accounts
 
-Pick where you want to run Kilo.
+- 17 built-in providers, including OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Mistral, DeepSeek and Azure OpenAI, plus a custom OpenAI-compatible endpoint.
+- Three wire protocols: OpenAI-compatible SSE, Anthropic Messages, and Gemini `streamGenerateContent`.
+- Any number of accounts per provider, ordering, enable/disable, usage counters, cooldowns, and per-account last error.
+- Rotation modes: manual, next, round robin, failover, least used, and weighted random, with automatic failover, maximum switches, and cooldowns.
+- API keys are encrypted with AES-256-GCM in the Android Keystore; Android backup is disabled.
 
-<details open>
-<summary><strong>VS Code</strong></summary>
+### Agent and workspace
 
-<br>
+- Agent loop with up to six tool steps per user turn; text, reasoning, and tool calls stream into the chat.
+- Seven workspace tools: `list_files`, `read_file`, `write_file`, `replace_in_file`, `search_files`, `make_directory`, `delete_file`.
+- App-private workspace under `filesDir/workspace`; every path is canonicalized and checked against the root, escaping symlinks are rejected.
+- Room-backed sessions and message history, including tool calls and results.
+- Deterministic compaction at 28,000 characters: older turns are summarized locally, the last ten turns are kept, no extra model call.
 
-Install the [Kilo Code extension](vscode:extension/kilocode.kilo-code) directly, or grab it from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code). Create an account and you'll have access to 500+ models including GPT-6 Astra, Claude Fable 5.1, Gemini 3.8 Flash, Grok 4.6, and DeepSeek V4.1 Flash, all at provider pricing.
+### GitHub build pipeline
 
-</details>
+- One encrypted classic PAT with `repo` and `workflow`.
+- Workspace push as one commit through the GitHub Git Data API; no git binary and no shell on the phone.
+- Workflow dispatch, the latest 15 runs per branch, build logs with a 200,000-character cap, artifact listing and APK install through the system installer.
+- Sensitive files are never pushed: `.env` files, `local.properties`, keystores, private keys, and certificates.
 
-<details open>
-<summary><strong>CLI</strong></summary>
+### On-device builds (Phase 1, in progress)
 
-<br>
+Phase 1 adds local debug builds for supported Android-Gradle projects: pick a project, tap **Build**, Gradle runs inside a PRoot container on the phone, and the installer opens. KiloCoder itself is one test fixture, not the boundary.
 
-```bash
-# npm
-npm install -g @kilocode/cli
-
-# curl
-curl -fsSL https://kilo.ai/cli/install | bash
-
-# pnpm
-pnpm add -g @kilocode/cli
-
-# bun
-bun add -g @kilocode/cli
-
-# Homebrew (macOS / Linux)
-brew install Kilo-Org/tap/kilo
-
-# Arch Linux (AUR)
-paru -S kilo-bin
-```
-
-Then run `kilo` in any project directory to start.
-
-</details>
-
-<details>
-<summary><strong>JetBrains</strong></summary>
-
-<br>
-
-Install the [Kilo Code plugin](https://plugins.jetbrains.com/plugin/28350-kilo-code) from the JetBrains Marketplace, or search "Kilo Code" in `Settings → Plugins` inside any JetBrains IDE.
-
-</details>
-
-<details>
-<summary><strong>Cloud Agent</strong></summary>
-
-<br>
-
-Run Kilo from the web, no local machine needed, at [app.kilo.ai/cloud](https://app.kilo.ai/cloud).
-
-</details>
-
-<details>
-<summary><strong>Code Reviews</strong></summary>
-
-<br>
-
-Set up automated AI code reviews on your pull requests at [app.kilo.ai/code-reviews](https://app.kilo.ai/code-reviews).
-
-</details>
-
-<details>
-<summary>Install the CLI from GitHub Releases (binaries)</summary>
-
-Download the latest binary from the [Releases page](https://github.com/Kilo-Org/kilocode/releases).
-
-| Platform | Asset |
+| Topic | Decision |
 |---|---|
-| Windows (most PCs) | `kilo-windows-x64.zip` |
-| macOS (Apple Silicon) | `kilo-darwin-arm64.zip` |
-| macOS (Intel) | `kilo-darwin-x64.zip` |
-| Linux x64 | `kilo-linux-x64.tar.gz` |
-| Linux ARM | `kilo-linux-arm64.tar.gz` |
+| Rootfs | Debian 12 bookworm arm64, pinned tarball with SHA-256 |
+| Format | `tar.zst` with symlink, hardlink and mode preservation |
+| Toolchain | Gradle 8.14.3, JDK 17, AGP 8.7.3–8.13.2, compileSdk 35/36, build-tools 35.0.0 |
+| Projects | `settings.gradle*`, application module `:app`, `assembleDebug`, no NDK/Flutter/React Native |
+| Hosting | GitHub Releases with component-wise assets and pinned SHA-256 |
 
-Notes: `x64-baseline` is a compatibility build for older CPUs without AVX. `musl` is the statically linked build for Alpine or minimal Docker images without glibc. `kilo-vscode-*.vsix` is the VS Code extension package, not the CLI. `Source code` archives are for building from source.
+PRoot, its loader, talloc and android-shmem are currently pinned Termux builds; M1.2 replaces them with an own NDK r28 build. The debug build carries an **M1.1 PRoot-Test** launcher entry that downloads the pinned rootfs, extracts it, and checks PRoot under `targetSdk 36`. The device run has not happened yet, so the Go/No-Go is open.
 
-</details>
+## Build
 
-### Agents
+Builds run only on GitHub Actions. Neither the phone nor a development machine needs a JDK, the Android SDK, or Gradle.
 
-Kilo ships with specialized agents you switch between depending on the task. You can also build your own custom agents.
+- Workflow: [`.github/workflows/android.yml`](.github/workflows/android.yml)
+- Triggers: push and pull request with changes under `android/**`, plus `workflow_dispatch`
+- Steps: `:app:testDebugUnitTest`, then `:app:assembleDebug` with `-PversionName=0.1.$GITHUB_RUN_NUMBER`
+- Artifact: `kilocoder-debug-apk` (`app-debug.apk`)
 
-- **Code** - The default. Implements and edits code from natural language.
-- **Plan** - Designs architecture and writes implementation plans before any code gets written.
-- **Ask** - Answers questions about your codebase without touching any files.
-- **Debug** - Troubleshoots and traces issues.
+A CI build from run 14 is version `0.1.14`. Install only artifacts from a run you trust.
 
-Learn more about [agents and custom agents](https://kilo.ai/docs/code-with-ai/agents/using-agents).
+## Branching
 
-### What it does
+- `main` is the integration branch and is not pushed to directly.
+- Every change runs on `android/<topic>`, for example `android/m1.1-proot-smoke`.
+- Pushes name the target branch explicitly.
+- The root `README.md` and `android/README.md` are updated in the same commit as the change that moves the project state.
+- The binding rules live in [`AGENTS.md`](AGENTS.md) and [`android/AGENTS.md`](android/AGENTS.md).
 
-- **Code generation** from natural language, across multiple files.
-- **Inline autocomplete** with ghost-text suggestions and tab to accept.
-- **Self-checking** so the agent reviews and corrects its own work.
-- **Terminal and browser control** to run commands and automate the web.
-- **Kilo Marketplace** to install agents, skills, MCP servers, and plugins that extend what the agent can do.
-- **500+ models** with mid-task switching, so you can match latency, cost, and reasoning to the job.
+## Quick start
 
-### Autonomous Mode (CI/CD)
+1. Open **Actions → android → latest successful run → Artifacts** and download `kilocoder-debug-apk`.
+2. Install the APK. Android may ask you to allow installs from KiloCoder.
+3. Open **Accounts**, add a provider API key, and test the connection.
+4. Open **GitHub**, enter owner, repository, branch and workflow file, connect with a classic PAT (`repo`, `workflow`).
+5. Push the workspace, start the Android build, select the run, load the artifact and install it.
+6. For the PRoot check, open the second launcher entry **M1.1 PRoot-Test** and press **Start**; the report is written to `filesDir/m11/report.txt` and can be copied to the clipboard.
 
-Run `kilo run` with `--auto` for fully autonomous operation with no prompts, built for CI/CD pipelines:
+## Repository layout
 
-```bash
-kilo run --auto "run tests and fix any failures"
+```text
+android/
+  app/                     Android app (Compose UI, Room, providers, agent, GitHub)
+  app/src/debug/           M1.1 PRoot smoke test and its native libraries
+  test-fixtures/           hello-local-build, generic-sdk35, plus this app
+  tools/m1_1/              provenance and hashes of the PRoot binaries
+  PHASE1_LOCAL_BUILD_PLAN.md
+  PHASE1_M1_0_DECISIONS.md
+  PHASE1_M1_1_RUNBOOK.md
+  AGENTS.md                project rules
+  README.md                app-specific documentation
+.github/workflows/
+  android.yml              CI build and debug APK artifact
+  android-m3-e2e.yml       manual end-to-end GitHub test
 ```
 
-`--auto` auto-approves permission prompts unless a rule explicitly denies the action. Only use it in trusted environments.
+## Security notes
 
-### Documentation
+- API keys and the GitHub PAT are encrypted before they reach the Room database; plain secrets are never logged.
+- `android:allowBackup="false"` keeps the encrypted database out of Android cloud backup.
+- The agent has no shell, no network tools, and no access outside the app-private workspace. Path traversal and escaping symlinks are rejected.
+- GitHub pushes omit sensitive local files and never upload the encrypted token database.
+- Downloaded APKs live only under `cacheDir/github`; the `FileProvider` exposes that directory only, and every install is confirmed in the system installer.
+- PRoot is not a security sandbox. A Phase 1 build runs under the app's UID and can read app files it knows about, so only the project, the SDK and a separate Gradle home are mounted; API keys, PATs and keystores are never mounted.
 
-For configuration and everything else, [head over to the docs](https://kilo.ai/docs).
+## Roadmap
 
-### Contributing
+| Milestone | Scope | State |
+|---|---|---|
+| M0 | Gradle scaffold, Compose shell, CI build, installable debug APK | done |
+| M1 | Provider catalog, encrypted multi-account storage, rotation, streaming chat | done |
+| M2 | Agent loop, file tools, app-private workspace, sessions, compaction | done |
+| M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
+| Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
+| Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | device run open |
+| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | planned |
+| Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
+| M4 | German/English polish, self-update, rollback, release signing | open |
 
-Contributions are welcome from developers, writers, and everyone in between. Start with the [Contributing Guide](/CONTRIBUTING.md) for environment setup, coding standards, and how to open a pull request. See [RELEASING.md](RELEASING.md) for the VS Code extension and CLI release process, and [packages/kilo-jetbrains/RELEASING.md](packages/kilo-jetbrains/RELEASING.md) for the JetBrains plugin.
+## License
 
-Please review our [Code of Conduct](/CODE_OF_CONDUCT.md) before getting involved.
-
-### License
-
-MIT. You're free to use, modify, and distribute this code, including commercially, as long as you keep the attribution and license notices. See [License](/LICENSE).
-
-### FAQ
-
-<details>
-<summary>Where did Kilo CLI come from?</summary>
-
-Kilo CLI is a fork of [OpenCode](https://github.com/anomalyco/opencode), enhanced to work within the Kilo agentic engineering platform.
-
-</details>
-
----
-
-**Join the community** [Discord](https://kilo.ai/discord) | [X](https://x.com/kilocode) | [Reddit](https://www.reddit.com/r/kilocode/)
+MIT. See [`LICENSE`](LICENSE).

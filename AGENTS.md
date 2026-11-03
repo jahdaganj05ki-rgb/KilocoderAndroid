@@ -1,5 +1,15 @@
 # AGENTS.md
 
+## Repository README
+
+- The root `README.md` describes only this project (KiloCoder) and its current
+  state. It must not reference upstream or other products, their branding,
+  badges, install instructions or documentation.
+- Update the root `README.md` with every push: milestones, open items, build and
+  branch rules, structure, roadmap.
+- The root README describes the current state, not the plan; details stay in
+  `android/PHASE1_*.md`.
+
 Kilo CLI is an open source AI coding agent that generates code from natural language, automates tasks, and supports 500+ AI models.
 
 - ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
