@@ -12,9 +12,11 @@ import com.kilocoder.android.data.provider.TestResult
 import com.kilocoder.android.domain.Clock
 import com.kilocoder.android.domain.WallClock
 import com.kilocoder.android.domain.account.AccountSelector
+import com.kilocoder.android.domain.account.RotationMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 
 sealed interface ChatFailure {
     data object NoAccount : ChatFailure
@@ -55,6 +57,8 @@ class ChatRepository(
             return@channelFlow
         }
         val policy = accounts.policy(providerId)
+        val mode = runCatching { RotationMode.valueOf(policy.mode) }
+            .getOrDefault(RotationMode.FAILOVER)
         val request = ChatRequest(model = model, system = system, turns = trim(turns))
         val excluded = mutableSetOf<String>()
         var content = false
@@ -75,6 +79,9 @@ class ChatRepository(
             if (key == null) {
                 send(ChatEvent.Failed(ChatFailure.KeyDecrypt))
                 return@channelFlow
+            }
+            if (pinned == null && !account.active) {
+                accounts.setActive(account.id)
             }
             accounts.markUsed(account.id)
             send(ChatEvent.Account(account.id, account.label))
@@ -107,12 +114,14 @@ class ChatRepository(
 
             if (done) {
                 accounts.success(account.id)
+                if (pinned == null && mode == RotationMode.NEXT) accounts.next(providerId)
                 send(ChatEvent.Completed)
                 return@channelFlow
             }
             val error = failure
             if (error == null && content) {
                 accounts.success(account.id)
+                if (pinned == null && mode == RotationMode.NEXT) accounts.next(providerId)
                 send(ChatEvent.Completed)
                 return@channelFlow
             }
