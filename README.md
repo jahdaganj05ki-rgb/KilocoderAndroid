@@ -16,10 +16,11 @@ KiloCoder is a native Android coding agent. It runs on the phone: you chat with 
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, acceptance criteria | done |
 | Phase 1 · M1.1 | PRoot smoke test for on-device builds | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2–M1.6 | Toolchain pack, hello build, multi-project build, app integration, hardening | planned |
+| Phase 1 · M1.2 | Own PRoot build with NDK r28 in CI, 16-KB ELF check, toolchain pack | in progress |
+| Phase 1 · M1.3–M1.6 | Hello build, multi-project build, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 
-The current Phase 1 work lives on the `android/m1.1-proot-smoke` branch. Details are in [`android/PHASE1_LOCAL_BUILD_PLAN.md`](android/PHASE1_LOCAL_BUILD_PLAN.md), [`android/PHASE1_M1_0_DECISIONS.md`](android/PHASE1_M1_0_DECISIONS.md) and [`android/PHASE1_M1_1_RUNBOOK.md`](android/PHASE1_M1_1_RUNBOOK.md).
+The current Phase 1 work lives on the `android/m1.2-proot-ndk` branch. Details are in [`android/PHASE1_LOCAL_BUILD_PLAN.md`](android/PHASE1_LOCAL_BUILD_PLAN.md), [`android/PHASE1_M1_0_DECISIONS.md`](android/PHASE1_M1_0_DECISIONS.md) and [`android/PHASE1_M1_1_RUNBOOK.md`](android/PHASE1_M1_1_RUNBOOK.md).
 
 ## What it does
 
@@ -58,7 +59,9 @@ Phase 1 adds local debug builds for supported Android-Gradle projects: pick a pr
 | Projects | `settings.gradle*`, application module `:app`, `assembleDebug`, no NDK/Flutter/React Native |
 | Hosting | GitHub Releases with component-wise assets and pinned SHA-256 |
 
-PRoot, its loader, talloc and android-shmem are currently pinned Termux builds; M1.2 replaces them with an own NDK r28 build. The debug build carries an **M1.1 PRoot-Test** launcher entry that downloads the pinned rootfs, extracts it, and checks PRoot under `targetSdk 36`. The device run has not happened yet, so the Go/No-Go is open.
+PRoot, its loader, talloc and libandroid-shmem are built from pinned sources with NDK r28 in CI on every Android build. The build fails if any ELF `PT_LOAD` segment is not 16-KB aligned; a runtime 16-KB test stays in Phase 2.
+
+The debug build carries an **M1.1 PRoot-Test** launcher entry that downloads the pinned rootfs, extracts it, and checks PRoot under `targetSdk 36`. The device run on 2026-11-03 passed 12 of 12 checks on the Moto G84 (Android 15), so the Go/No-Go is GO; the 16-KB runtime test stays in Phase 2.
 
 ## Build
 

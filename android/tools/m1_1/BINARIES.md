@@ -4,6 +4,11 @@ Die Debug-Variante bringt vier aarch64-Binaries mit. Sie liegen in
 `app/src/debug/jniLibs/arm64-v8a/`, damit sie **nur** im Debug-APK landen.
 Ein Release-Build enthält sie nicht.
 
+**Seit M1.2** baut der CI-Workflow diese vier Bibliotheken mit NDK r28 aus
+Quellcode und ersetzt die Dateien im Runner vor dem Gradle-Lauf. Die hier
+dokumentierten Termux-Kopien bleiben als Referenz im Repo; Details und Pins
+stehen in [`../m1_2/BUILD.md`](../m1_2/BUILD.md).
+
 ## Woher
 
 Es sind die aktuellen Termux-Pakete für `aarch64` (Bionic, mit NDK gebaut).
@@ -64,6 +69,8 @@ Quellen und Build-Skript beiliegen (Plan, Abschnitt 11).
 
 ## Neu bauen statt Pakete kopieren
 
-M1.2 ersetzt diese Dateien durch einen eigenen NDK-r28-Build aus
-`https://github.com/termux/proot` mit `libtalloc` und `-Wl,-z,max-page-size=16384`.
-Die vier Dateinamen und Pfade bleiben gleich, der Smoke-Test ändert sich nicht.
+Seit M1.2 baut CI die vier Dateien aus `termux/proot` 5.1.107.102,
+talloc 2.5.0 und libandroid-shmem 0.7 mit NDK r28 und
+`-Wl,-z,max-page-size=16384`. Die Dateinamen und Pfade bleiben gleich, der
+Smoke-Test ändert sich nicht. Die eingecheckten Termux-Kopien werden im Runner
+überschrieben.

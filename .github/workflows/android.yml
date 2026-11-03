@@ -43,6 +43,47 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
+      - name: Setup NDK r28
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:?Android SDK root is not set}}"
+          NDK_VERSION=28.2.13676358
+          if [ ! -d "$SDK/ndk/$NDK_VERSION" ]; then
+            sdkmanager --install "ndk;$NDK_VERSION"
+          fi
+          echo "ANDROID_NDK_HOME=$SDK/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+
+      - name: Build PRoot with NDK r28
+        run: |
+          set -o pipefail
+          mkdir -p android/app/build/proot-ndk
+          bash android/tools/m1_2/build-proot.sh 2>&1 | tee android/app/build/proot-ndk/build.log
+
+      - name: PRoot build failure summary
+        if: failure()
+        run: |
+          log=android/app/build/proot-ndk/build.log
+          [ -f "$log" ] || exit 0
+          {
+            echo "## PRoot build failed"
+            echo '```'
+            tail -n 80 "$log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error title=PRoot build failed::$(grep -m1 -E 'error:|FAIL|Error' "$log" | cut -c1-200)"
+
+      - name: Upload PRoot build report
+        uses: actions/upload-artifact@v7
+        with:
+          name: proot-ndk-r28
+          path: |
+            android/app/build/proot-ndk/report.txt
+            android/app/src/debug/jniLibs/arm64-v8a/libproot.so
+            android/app/src/debug/jniLibs/arm64-v8a/libproot-loader.so
+            android/app/src/debug/jniLibs/arm64-v8a/libtalloc.so
+            android/app/src/debug/jniLibs/arm64-v8a/libandroid-shmem.so
+          if-no-files-found: error
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:

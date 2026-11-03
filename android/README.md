@@ -2,7 +2,7 @@
 
 Standalone, native Android coding agent. The agent runs on the phone; every Android build runs on GitHub Actions.
 
-This directory contains M0–M3 and Phase 1 up to the M1.1 Go. M3 is the encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. Phase 1 prepares the on-device build of arbitrary Android projects with PRoot; M1.0 is decided and the M1.1 smoke test passed on the Moto G84 on 2026-11-03.
+This directory contains M0–M3 and Phase 1 up to the M1.1 Go and the start of M1.2. M3 is the encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. Phase 1 prepares the on-device build of arbitrary Android projects with PRoot; M1.0 is decided and the M1.1 smoke test passed on the Moto G84 on 2026-11-03.
 
 ## Status
 
@@ -14,7 +14,8 @@ This directory contains M0–M3 and Phase 1 up to the M1.1 Go. M3 is the encrypt
 | M3 | GitHub PAT, push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2–M1.6 | Toolchain pack, hello build, multi-project, app integration, hardening | planned |
+| Phase 1 · M1.2 | Own PRoot NDK r28 build in CI, 16-KB ELF check, toolchain pack | in progress |
+| Phase 1 · M1.3–M1.6 | Hello build, multi-project, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 
 The binding rules for agents live in [`AGENTS.md`](AGENTS.md): builds only on GitHub Actions, changes only on `android/<topic>` branches, and the README is updated with every push.
@@ -106,12 +107,14 @@ gradle :app:assembleDebug -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="0.1.
 
 The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocoder-debug-apk` artifact. Because the version name is derived from the run number, each run gets a version like `0.1.<run_number>`; the run page shows the exact value. On a successful push or manual run, the workflow also publishes a GitHub release tagged `v0.1.<run_number>` with `kilocoder-debug-0.1.<run_number>.apk`; pull-request builds skip the release step. The built-in `GITHUB_TOKEN` with `contents: write` is used, so no extra secret is required.
 
+Before Gradle runs, the same workflow builds PRoot, its loader, talloc and libandroid-shmem from pinned sources with NDK r28 and replaces the four debug libraries in the runner. The step fails if any `PT_LOAD` segment is not 16-KB aligned. Sources, flags and checks are in [`tools/m1_2/BUILD.md`](tools/m1_2/BUILD.md); the report and the built libraries are uploaded as the `proot-ndk-r28` artifact.
+
 Local builds of this app are not part of the workflow. Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
 
 ## Branching
 
 - `main` is the integration branch and is not pushed to directly.
-- Every change runs on `android/<topic>`, for example `android/m1.1-proot-smoke`.
+- Every change runs on `android/<topic>`, for example `android/m1.2-proot-ndk`.
 - Pushes name the target branch explicitly.
 - The README is updated in the same commit as the change that moves the project state.
 
@@ -134,7 +137,7 @@ Decisions are recorded in [`PHASE1_M1_0_DECISIONS.md`](PHASE1_M1_0_DECISIONS.md)
 
 `app/src/debug/` contains a debug-only activity that appears as a second launcher entry, **M1.1 PRoot-Test**. It downloads the pinned rootfs, extracts it, starts PRoot from `nativeLibraryDir`, and checks the PRoot assumptions: `--version`, guest `echo`, `readlink /bin/sh`, guest `bash`, `uname -m`/`PAGE_SIZE`, exit-code propagation, 16-KB ELF alignment, and cancellation. The optional steps install `openjdk-17-jre-headless` in the guest and run `java -version`.
 
-The PRoot binaries (PRoot, loader, talloc, android-shmem) are pinned Termux packages with recorded SHA-256 hashes; [`tools/m1_1/BINARIES.md`](tools/m1_1/BINARIES.md) documents provenance, the private `libtalloc.so.2` copy used to satisfy the SONAME, and the GPL-2.0 note. M1.2 replaces them with an own NDK r28 build.
+The PRoot binaries (PRoot, loader, talloc, android-shmem) are pinned Termux packages with recorded SHA-256 hashes; [`tools/m1_1/BINARIES.md`](tools/m1_1/BINARIES.md) documents provenance, the private `libtalloc.so.2` copy used to satisfy the SONAME, and the GPL-2.0 note. Since M1.2, CI replaces them with an own NDK r28 build from pinned sources.
 
 The device run on 2026-11-03 with `0.1.18` returned **GO**: 12 of 12 checks passed on the Moto G84 (Android 15, API 35, `targetSdk 36`, PAGE_SIZE 4096), including the guest commands, exit-code propagation, cancellation and `java -version`. The 16-KB check is static only; a runtime test remains in Phase 2. Install steps, expected output and failure modes are in [`PHASE1_M1_1_RUNBOOK.md`](PHASE1_M1_1_RUNBOOK.md). The release APK never contains the smoke activity or the PRoot libraries.
 
@@ -259,7 +262,9 @@ android/
     jniLibs/arm64-v8a/         PRoot, loader, talloc, android-shmem
   app/src/main/res/            Strings (en/de), launcher icon, platform theme
   test-fixtures/               hello-local-build and generic-sdk35
-  tools/m1_1/BINARIES.md       provenance and hashes of the PRoot binaries
+  tools/m1_1/BINARIES.md       provenance and hashes of the Termux reference binaries
+  tools/m1_2/BUILD.md          own PRoot NDK r28 build, pins and 16-KB checks
+  tools/m1_2/build-proot.sh    CI build script for PRoot, loader, talloc, shmem
   .github/workflows/android.yml  CI build at the repository root
   .github/workflows/android-m3-e2e.yml  manual live GitHub E2E
 ```
@@ -286,6 +291,6 @@ android/
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | planned |
+| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | in progress: own PRoot NDK r28 build; pack open |
 | Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
