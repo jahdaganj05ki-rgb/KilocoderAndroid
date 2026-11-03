@@ -234,7 +234,7 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: |
-            set -eo pipefail
+            set -e
             adb install -r "$GITHUB_WORKSPACE/m3-e2e.apk"
             adb shell pm list packages | grep -qx "package:com.kilocoder.android"
             adb logcat -c
