@@ -16,7 +16,7 @@ This directory contains M3: an encrypted GitHub PAT connection, workspace push t
 - Artifact listing and APK download from the selected run. The system installer is opened through a scoped `FileProvider` URI.
 - Sensitive files are never pushed: `.env` files, `local.properties`, keystores, private keys, and common certificate files are skipped.
 - English and German UI strings.
-- A manual GitHub Actions E2E workflow that pushes, dispatches, reads logs, downloads an APK, and installs it on an emulator against a disposable test repository.
+- A manual GitHub Actions E2E workflow that pushes, dispatches, reads logs, and downloads an APK against a disposable test repository.
 
 ## GitHub token
 
@@ -118,9 +118,9 @@ The API job:
 3. Runs `M3E2eTest` against the production `GitHubApi`: validates the PAT and repository, pushes the snapshot as a root commit to the repository's default branch, dispatches the Android workflow, waits for the run, downloads the logs, and downloads the APK artifact.
 4. Uploads `m3-e2e-report` and `m3-e2e-apk`, then deletes the temporary repository unless `keep_repo` is enabled.
 
-The install job boots an Android 15 emulator, installs the downloaded APK with `adb install`, verifies the package, launches `MainActivity`, and uploads a screenshot and logcat as `m3-e2e-emulator`.
+The workflow stops after downloading and uploading the APK. Emulator installation is intentionally not part of CI because boot time dominates the run. Install the APK manually on a device or emulator.
 
-The test class is skipped in normal `testDebugUnitTest` runs. The workflow tests the GitHub API path and system-level APK installation; it does not script the in-app Install button or the Android package-installer dialog. Those remain a manual device check.
+The test class is skipped in normal `testDebugUnitTest` runs. The workflow tests the GitHub API path and downloads the APK; the in-app Install button and the Android package-installer dialog remain a manual device check.
 
 If cleanup fails because `delete_repo` or `Administration` write is missing, the run fails and the private temporary repository remains. Delete it manually or re-run with the required scope.
 

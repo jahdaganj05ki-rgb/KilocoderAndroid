@@ -2,10 +2,6 @@
 name: android-m3-e2e
 
 on:
-  # Temporary trigger for the first live run. Remove after the E2E run.
-  push:
-    branches:
-      - m3-e2e-run
   workflow_dispatch:
     inputs:
       keep_repo:
@@ -200,62 +196,3 @@ jobs:
           else
             echo "Temporary repository already absent: $OWNER/$REPO"
           fi
-
-  install:
-    name: install artifact on emulator
-    needs: api
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Download the APK artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: m3-e2e-apk
-          path: e2e-apk
-
-      - name: Select the APK
-        run: |
-          set -euo pipefail
-          APK="$(find e2e-apk -type f -name '*.apk' -print -quit)"
-          if [ -z "$APK" ]; then
-            echo "::error::The API job did not upload an APK."
-            exit 1
-          fi
-          cp "$APK" "$GITHUB_WORKSPACE/m3-e2e.apk"
-          printf 'Installing %s (%s bytes)\n' \
-            "$GITHUB_WORKSPACE/m3-e2e.apk" \
-            "$(stat -c%s "$GITHUB_WORKSPACE/m3-e2e.apk")"
-
-      - name: Boot emulator and install
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          disable-animations: true
-          script: |
-            set -e
-            adb install -r "$GITHUB_WORKSPACE/m3-e2e.apk"
-            adb shell pm list packages | grep -qx "package:com.kilocoder.android"
-            adb logcat -c
-            adb shell am start -W -n com.kilocoder.android/.MainActivity
-            sleep 5
-            if ! adb shell pidof com.kilocoder.android; then
-              adb logcat -d -t 400 > "$GITHUB_WORKSPACE/logcat.txt"
-              echo "::error::KiloCoder did not stay running after launch."
-              exit 1
-            fi
-            adb exec-out screencap -p > "$GITHUB_WORKSPACE/m3-e2e.png"
-            adb logcat -d -t 200 > "$GITHUB_WORKSPACE/logcat.txt"
-
-      - name: Upload emulator evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: m3-e2e-emulator
-          path: |
-            m3-e2e.png
-            m3-e2e.apk
-            logcat.txt
-          if-no-files-found: warn
-          retention-days: 7
