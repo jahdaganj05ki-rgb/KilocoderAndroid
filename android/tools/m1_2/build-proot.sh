@@ -107,6 +107,8 @@ fetch "https://github.com/termux/proot/archive/v${PROOT_VERSION}.zip" \
 unzip -q proot.zip
 cd "proot-${PROOT_VERSION}"
 export CC AR RANLIB STRIP
+export OBJCOPY="$TOOLCHAIN/bin/llvm-objcopy"
+export OBJDUMP="$TOOLCHAIN/bin/llvm-objdump"
 export CPPFLAGS="-DARG_MAX=131072 -DVERSION='\"${PROOT_VERSION}\"' -I$WORK/talloc-prefix/include -I$WORK/shmem-prefix/usr/include"
 # NDK r28 turns implicit function declarations into errors. PRoot's older
 # sources omit a few <string.h> includes; keep those as warnings.

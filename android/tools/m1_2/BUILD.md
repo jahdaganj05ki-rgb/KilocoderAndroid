@@ -35,7 +35,9 @@ einschränken.
    `_PATH_TMP` nicht, deshalb wird es als `/tmp/` übergeben.
 4. PRoot mit `PROOT_WITH_LIBANDROID_SHMEM=true`, `-ltalloc` und
    `-landroid-shmem` bauen. `-I` auf das shmem-Prefix stellt sicher, dass
-   `<sys/shm.h>` die Emulation und nicht den Bionic-Stub trifft.
+   `<sys/shm.h>` die Emulation und nicht den Bionic-Stub trifft. `OBJCOPY`
+   und `OBJDUMP` zeigen auf die LLVM-Tools des NDK, damit der Loader als
+   `loader-wrapped.o` eingebettet werden kann.
 5. Loader separat mit `LOADER_LDFLAGS` und derselben Seitengröße linken.
 6. Nach `jniLibs` kopieren und prüfen: ELF64/AArch64, jedes
    `PT_LOAD`-Alignment ≥ `0x4000`, Interpreter `/system/bin/linker64`,
