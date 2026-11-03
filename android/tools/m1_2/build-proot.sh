@@ -100,9 +100,11 @@ make install DESTDIR="$WORK/shmem-prefix" PREFIX=/usr
 # PRoot 5.1.107.102 (GPL-2.0-only). Loading the header path from the shmem
 # prefix makes <sys/shm.h> resolve to the emulation instead of bionic's stub.
 cd "$WORK"
-fetch "https://github.com/termux/proot/archive/v${PROOT_VERSION}.tar.gz" \
-    "proot.tar.gz" "$PROOT_SHA256"
-tar xf proot.tar.gz
+# The pinned hash belongs to GitHub's zip archive (the download the Termux
+# package pins); the .tar.gz has a different checksum.
+fetch "https://github.com/termux/proot/archive/v${PROOT_VERSION}.zip" \
+    "proot.zip" "$PROOT_SHA256"
+unzip -q proot.zip
 cd "proot-${PROOT_VERSION}"
 export CC AR RANLIB STRIP
 export CPPFLAGS="-DARG_MAX=131072 -DVERSION='\"${PROOT_VERSION}\"' -I$WORK/talloc-prefix/include -I$WORK/shmem-prefix/usr/include"

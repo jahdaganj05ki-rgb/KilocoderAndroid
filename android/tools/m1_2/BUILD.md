@@ -17,7 +17,7 @@ Kontrolle stehen.
 
 | Komponente | Version | Quelle | SHA-256 |
 |---|---|---|---|
-| PRoot | 5.1.107.102 | `termux/proot`, Tag `v5.1.107.102` | `30d12a6e2cc4147123756ff58edea262d3083bbc238c12d0ab9b39e3d1c40852` |
+| PRoot | 5.1.107.102 | `termux/proot`, Tag `v5.1.107.102` (zip archive) | `30d12a6e2cc4147123756ff58edea262d3083bbc238c12d0ab9b39e3d1c40852` |
 | talloc | 2.5.0 | `samba.org/ftp/talloc` | `912afa237510ae542a7733998eb18a12bcda35ab6729c8e2ddb43e8d0ebab007` |
 | libandroid-shmem | 0.7 | `termux/libandroid-shmem`, Tag `v0.7` | `1e5ff8459bc0a8c229dd8a94b27d119987e09ef3414331c2b5ebfff20b98e867` |
 
