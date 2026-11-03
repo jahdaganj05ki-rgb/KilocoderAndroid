@@ -68,6 +68,7 @@ Builds run only on GitHub Actions. Neither the phone nor a development machine n
 - Triggers: push and pull request with changes under `android/**`, plus `workflow_dispatch`
 - Steps: `:app:testDebugUnitTest`, then `:app:assembleDebug` with `-PversionName=0.1.$GITHUB_RUN_NUMBER`
 - Artifact: `kilocoder-debug-apk` (`app-debug.apk`)
+- Release: every successful push or manual run publishes `v0.1.<run_number>` with `kilocoder-debug-0.1.<run_number>.apk` under Releases; pull-request builds publish nothing
 
 Each run produces a version like `0.1.<run_number>`; the run page shows the exact value. Install only artifacts from a run you trust.
 

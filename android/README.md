@@ -104,7 +104,7 @@ gradle :app:testDebugUnitTest
 gradle :app:assembleDebug -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="0.1.$GITHUB_RUN_NUMBER"
 ```
 
-The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocoder-debug-apk` artifact. Because the version name is derived from the run number, each run gets a version like `0.1.<run_number>`; the run page shows the exact value.
+The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocoder-debug-apk` artifact. Because the version name is derived from the run number, each run gets a version like `0.1.<run_number>`; the run page shows the exact value. On a successful push or manual run, the workflow also publishes a GitHub release tagged `v0.1.<run_number>` with `kilocoder-debug-0.1.<run_number>.apk`; pull-request builds skip the release step. The built-in `GITHUB_TOKEN` with `contents: write` is used, so no extra secret is required.
 
 Local builds of this app are not part of the workflow. Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
 
