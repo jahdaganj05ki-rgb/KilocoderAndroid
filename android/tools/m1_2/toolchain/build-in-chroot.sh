@@ -28,6 +28,9 @@ record() {
     printf '%s=%s\n' "$key" "$value" >>"$ENVF"
 }
 
+log "normalize temporary directory permissions"
+chmod 1777 /tmp /var/tmp
+
 log "install current Debian archive keyring"
 dpkg -i /tmp/toolchain-input/debian-archive-keyring.deb
 record KEYRING_VERSION "$(dpkg-query -W -f='${Version}' debian-archive-keyring)"
