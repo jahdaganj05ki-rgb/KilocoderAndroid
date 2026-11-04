@@ -16,11 +16,11 @@ KiloCoder is a native Android coding agent. It runs on the phone: you chat with 
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, acceptance criteria | done |
 | Phase 1 · M1.1 | PRoot smoke test for on-device builds | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Own PRoot build with NDK r28 in CI, 16-KB ELF check, toolchain pack | in progress: own build verified on device; pack open |
+| Phase 1 · M1.2 | Own PRoot build with NDK r28 in CI, 16-KB ELF check, toolchain pack | pack done: own build and arm64 pack verified; release publication open |
 | Phase 1 · M1.3–M1.6 | Hello build, multi-project build, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 
-The current Phase 1 work lives on the `android/m1.2-proot-ndk` branch. Details are in [`android/PHASE1_LOCAL_BUILD_PLAN.md`](android/PHASE1_LOCAL_BUILD_PLAN.md), [`android/PHASE1_M1_0_DECISIONS.md`](android/PHASE1_M1_0_DECISIONS.md) and [`android/PHASE1_M1_1_RUNBOOK.md`](android/PHASE1_M1_1_RUNBOOK.md).
+The current Phase 1 work lives on the `android/m1.2-toolchain` branch. Details are in [`android/PHASE1_LOCAL_BUILD_PLAN.md`](android/PHASE1_LOCAL_BUILD_PLAN.md), [`android/PHASE1_M1_0_DECISIONS.md`](android/PHASE1_M1_0_DECISIONS.md) and [`android/PHASE1_M1_1_RUNBOOK.md`](android/PHASE1_M1_1_RUNBOOK.md).
 
 ## What it does
 
@@ -61,7 +61,7 @@ Phase 1 adds local debug builds for supported Android-Gradle projects: pick a pr
 
 PRoot, its loader, talloc and libandroid-shmem are built from pinned sources with NDK r28 in CI on every Android build. The build fails if any ELF `PT_LOAD` segment is not 16-KB aligned; a runtime 16-KB test stays in Phase 2. The resulting libraries passed the M1.1 smoke test on the Moto G84, including the on-device ELF check (`align=0x4000` for all four).
 
-The Phase 1 toolchain pack is built by `.github/workflows/android-toolchain.yml` on an arm64 Debian rootfs under qemu-user. The job installs JDK 17, Gradle 8.14.3, Android platforms 35/36 and build-tools 35.0.0, links a minimal resource with `aapt2`, signs and verifies it with `apksigner`, and uploads `rootfs.tar.zst`, `manifest.json` and the reports as the `android-toolchain-pack` artifact. The pack is not published as a release yet.
+The Phase 1 toolchain pack is built by `.github/workflows/android-toolchain.yml` on an arm64 Debian rootfs under qemu-user. The job installs JDK 17, Gradle 8.14.3, Android platforms 35/36 and build-tools 35.0.0, links a minimal resource with `aapt2`, signs and verifies it with `apksigner`, and uploads `rootfs.tar.zst`, `manifest.json` and the reports as the `android-toolchain-pack` artifact. Lauf #7 (2026-11-04) baute den Pack erfolgreich: `rootfs.tar.zst` 391.181.389 Bytes, SHA-256 `476382db…71da`, entpackt 969.199.467 Bytes; 544 Required-ELFs mit `0x4000`, sechs statische Build-Tools mit `0x1000` als dokumentierte Ausnahme. Der Pack ist ein Archiv und noch nicht als Release veröffentlicht.
 
 The debug build carries an **M1.1 PRoot-Test** launcher entry that downloads the pinned rootfs, extracts it, and checks PRoot under `targetSdk 36`. The device run on 2026-11-03 passed 12 of 12 checks on the Moto G84 (Android 15), first with the Termux reference binaries and again with the own NDK r28 build; the Go/No-Go is GO, and the 16-KB runtime test stays in Phase 2.
 
@@ -133,7 +133,7 @@ android/
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | in progress: PRoot verified; pack build in CI |
+| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | pack done: PRoot and arm64 pack verified; release publication open |
 | Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 

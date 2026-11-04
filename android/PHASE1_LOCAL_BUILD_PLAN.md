@@ -531,22 +531,25 @@ Status: **GO am 2026-11-03 auf dem Moto G84.** Der Lauf mit `0.1.18` bestand 12 
 
 ### M1.2 — Toolchain-Pack (3–5 Tage)
 
-Status: **gestartet am 2026-11-03.** PRoot, Loader, talloc und libandroid-shmem baut der Android-Workflow mit NDK r28 aus gepinnten Quellen und prüft sie statisch auf 16 KB ([tools/m1_2/BUILD.md](tools/m1_2/BUILD.md)). Der M1.1-Smoke-Test bestand mit diesem Build auf dem Moto G84 erneut 12 von 12, inklusive ELF-Check mit `align=0x4000` für alle vier Bibliotheken. Der Pack-Build ist inzwischen als eigener CI-Job angelegt (`.github/workflows/android-toolchain.yml`, qemu-user, Artefakt `android-toolchain-pack`); der erste Lauf und die Abnahme stehen noch aus. Die statischen `aapt2`/`zipalign` aus `android-sdk-tools` 35.0.2 sind 4-KB-ausgerichtet; der harte Gate prüft Shared Libraries und PRoot/loader, die beiden Tools sind als dokumentierte Ausnahme im Manifest. Ob die Abnahme 16 KB auch für sie verlangt, ist offen; Fallback ist ein eigener AOSP-/ReVanced-Build.
+Status: **Pack gebaut und verifiziert am 2026-11-04.** PRoot, Loader, talloc und libandroid-shmem baut der Android-Workflow mit NDK r28 aus gepinnten Quellen und prüft sie statisch auf 16 KB ([tools/m1_2/BUILD.md](tools/m1_2/BUILD.md)). Der M1.1-Smoke-Test bestand mit diesem Build auf dem Moto G84 erneut 12 von 12, inklusive ELF-Check mit `align=0x4000` für alle vier Bibliotheken. Der Pack-Build in `.github/workflows/android-toolchain.yml` (qemu-user, Artefakt `android-toolchain-pack`) war in Lauf #7 erfolgreich: `rootfs.tar.zst` 391.181.389 Bytes, SHA-256 `476382db…71da`, entpackt 969.199.467 Bytes, 544 Required-ELFs mit `0x4000`; sechs statische Build-Tools sind mit `0x1000` als dokumentierte Ausnahme im Manifest, keine falsche Architektur. Die App-seitige Extraktion/Installation und die Downloadzeit folgen in M1.5; die Release-Veröffentlichung des Packs ist noch offen.
 
 - [x] PRoot, Loader, talloc und libandroid-shmem mit NDK r28 bauen und statisch auf 16 KB prüfen.
-- [ ] Debian-Rootfs als `tar.zst` mit JDK 17, Gradle 8.14.3, SDK 35/36 und statischen Build-Tools bestücken.
-- [ ] `aapt2` und `zipalign` aus `android-sdk-tools` 35.0.2 als statische aarch64-Binaries verifizieren und mit AGP 8.13.2/compileSdk 36 echt linken; bei Fehlschlag Fallback aus Abschnitt 4 der M1.0-Entscheidungen.
-- [ ] `android.jar` für API 35 und 36 einspielen.
-- [ ] `package.xml` für Build-Tools schreiben.
-- [ ] `gradle --version`, `java -version`, `aapt2 version`, `zipalign` im Guest testen.
-- [ ] `android.aapt2FromMavenOverride` setzen.
-- [ ] CA-Zertifikate und Java-Truststore im Rootfs prüfen.
-- [ ] Debug-Keystore (`~/.android/debug.keystore`) erzeugen und `apksigner verify` testen.
-- [ ] Rootfs-Extractor mit Symlink-, Mode- und Hardlink-Erhalt implementieren.
-- [ ] Installationsroutine mit Größenprüfung, Zip-Slip- und Symlink-Traversal-Schutz implementieren.
-- [ ] 16-KB-ELF-Prüfung für Rootfs, JDK, aapt2, zipalign, PRoot und Loader ausführen.
-- [ ] Pack als getrennte Assets mit `manifest.json` und SHA-256 erzeugen.
-- [ ] Pack-Größe, entpackte Größe und Downloadzeit messen.
+- [x] Debian-Rootfs als `tar.zst` mit JDK 17, Gradle 8.14.3, SDK 35/36 und statischen Build-Tools bestücken.
+- [x] `aapt2` und `zipalign` aus `android-sdk-tools` 35.0.2 als statische aarch64-Binaries verifizieren; der echte `aapt2`-Link gegen `android.jar` 36 bestand. Der AGP-8.13.2-Lauf und der Fallback bleiben M1.3.
+- [x] `android.jar` für API 35 und 36 einspielen.
+- [x] `package.xml` für Build-Tools schreiben.
+- [x] `gradle --version`, `java -version`, `aapt2 version`, `zipalign` im Guest testen.
+- [x] `android.aapt2FromMavenOverride` setzen.
+- [x] CA-Zertifikate und Java-Truststore im Rootfs prüfen. (148 Einträge)
+- [x] Debug-Keystore (`~/.android/debug.keystore`) erzeugen und `apksigner verify` testen.
+- [ ] Rootfs-Extractor mit Symlink-, Mode- und Hardlink-Erhalt implementieren. (M1.5)
+- [ ] Installationsroutine mit Größenprüfung, Zip-Slip- und Symlink-Traversal-Schutz implementieren. (M1.5)
+- [x] 16-KB-ELF-Prüfung für Rootfs, JDK, aapt2, zipalign, PRoot und Loader ausführen. (938 ELF-Dateien; 544 Required bei `0x4000`; sechs statische Build-Tools bei `0x1000` als dokumentierte Ausnahme; keine falsche Architektur)
+- [x] Pack als ein `rootfs.tar.zst` mit `manifest.json` und `SHA256SUMS` erzeugen; die Abweichung von getrennten Assets ist in [tools/m1_2/BUILD.md](tools/m1_2/BUILD.md) dokumentiert.
+- [x] Pack-Größe und entpackte Größe messen: 391.181.389 / 969.199.467 Bytes.
+- [ ] Downloadzeit auf dem Gerät messen. (M1.5)
+
+Der M1.2-Pack ist damit abgeschlossen. App-seitige Extraktion/Installation, Downloadzeit und Release-Hosting bleiben offen.
 
 **Exit:** Ein Guest-Prozess kann Gradle und aapt2 ohne x86_64-Fehler starten.
 

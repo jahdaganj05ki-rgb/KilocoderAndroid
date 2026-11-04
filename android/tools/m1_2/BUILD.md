@@ -62,6 +62,28 @@ die ELF-Ausrichtung, `write-manifest.py` schreibt den Bericht. Das Artefakt
 `SHA256SUMS`, die ELF-Berichte, `toolchain-report.txt` und die Protokolle von
 aapt2, zipalign und apksigner.
 
+### Ergebnis Lauf #7
+
+Der Pack wurde am 2026-11-04 in
+[Lauf #7](https://github.com/jahdaganj05ki-rgb/KilocoderAndroid/actions/runs/41753569571)
+aus Commit `32cd48b72c` gebaut und abgenommen:
+
+| Messwert | Wert |
+|---|---|
+| `rootfs.tar.zst` | 391.181.389 Bytes (373,1 MiB) |
+| SHA-256 | `476382dbb4201eaecb4342017ad882e08bef28b2111a14bf35199b75273a71da` |
+| entpackt | 969.199.467 Bytes (924,3 MiB) |
+| ELF-Dateien | 938 geprüft, 544 Required, `required_align=0x4000` |
+| statische Ausnahmen | 6 Build-Tools bei `0x1000` (siehe unten) |
+| Gast-Tests | JDK 17.0.21, Gradle 8.14.3 (JVM 17.0.21), `aapt2 link` API 36, `zipalign -P 16`, `apksigner verify`, CA-Truststore 148 |
+
+Der Pack ist **ein** `rootfs.tar.zst` mit `manifest.json` und `SHA256SUMS`,
+nicht komponentenweise gesplittet. Das Manifest pinnt alle Komponenten; ein
+Archiv bedeutet einen Download und einen Hash. Der Jansi-/Gradle-Cache wird vor
+dem Pack entfernt, damit keine x86_64-Reste aus dem Host-JVM im arm64-Pack
+landen. Der Pack ist noch nicht als GitHub-Release veröffentlicht; das
+Workflow-Artefakt `android-toolchain-pack` ist die aktuelle Quelle.
+
 | Komponente | Pin |
 |---|---|
 | Basis | Debian 12 bookworm arm64, proot-distro v4.7.0, SHA-256 `4baa3228…b8df8` |
@@ -88,13 +110,14 @@ aligniert mit `zipalign`, signiert mit dem Debug-Key und prüft mit
 `apksigner verify`. Dazu kommen `java -version`, `gradle --version`, der
 CA-Bundle und der Java-Truststore.
 
-**16-KB-Befund:** Die statischen `aapt2` und `zipalign` aus 35.0.2 haben
-`PT_LOAD`-Alignment `0x1000` (4 KB), nicht `0x4000`. Sie werden als
-Guest-Executables unter PRoot gestartet und nicht vom Android-Linker geladen;
-der harte Gate gilt deshalb für alle Shared Libraries und die vier
-PRoot-Bibliotheken. Die beiden Tools stehen im Manifest als dokumentierte
-Ausnahme. Wenn die Abnahme 16 KB auch für sie verlangt, ist der Fallback ein
-eigener 16-KB-Build aus AOSP/ReVanced (aapt2) und ein eigener zipalign-Build.
+**16-KB-Befund:** Sechs statische Build-Tools aus 35.0.2 haben
+`PT_LOAD`-Alignment `0x1000` (4 KB), nicht `0x4000`: `aapt`, `aapt2`, `aidl`,
+`dexdump`, `split-select` und `zipalign`. Sie werden als Guest-Executables
+unter PRoot gestartet und nicht vom Android-Linker geladen; der harte Gate gilt
+deshalb für alle Shared Libraries und die vier PRoot-Bibliotheken. Die sechs
+Tools stehen im Manifest als dokumentierte Ausnahme (`load_align: 0x1000`).
+Wenn die Abnahme 16 KB auch für sie verlangt, ist der Fallback ein eigener
+16-KB-Build aus AOSP/ReVanced (aapt2) und eigene Builds der übrigen Tools.
 
 ## Grenzen
 

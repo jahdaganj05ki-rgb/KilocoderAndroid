@@ -2,7 +2,7 @@
 
 Standalone, native Android coding agent. The agent runs on the phone; every Android build runs on GitHub Actions.
 
-This directory contains M0–M3 and Phase 1 through the M1.1 GO and the M1.2 PRoot build. M3 is the encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. Phase 1 prepares the on-device build of arbitrary Android projects with PRoot; M1.0 is decided and the M1.1 smoke test passed on the Moto G84 on 2026-11-03.
+This directory contains M0–M3 and Phase 1 through the M1.1 GO and the M1.2 PRoot and toolchain-pack build. M3 is the encrypted GitHub PAT connection, workspace push through the Git Data API, workflow dispatch, workflow-run selection, build logs, artifact download, and APK installation. Phase 1 prepares the on-device build of arbitrary Android projects with PRoot; M1.0 is decided, the M1.1 smoke test passed on the Moto G84 on 2026-11-03, and the arm64 pack is built and verified in CI.
 
 ## Status
 
@@ -14,7 +14,7 @@ This directory contains M0–M3 and Phase 1 through the M1.1 GO and the M1.2 PRo
 | M3 | GitHub PAT, push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Own PRoot NDK r28 build in CI, 16-KB ELF check, toolchain pack | in progress: PRoot verified on device; toolchain pack build in CI |
+| Phase 1 · M1.2 | Own PRoot NDK r28 build in CI, 16-KB ELF check, toolchain pack | pack done: PRoot verified on device; arm64 pack built and verified in CI #7; release publication open |
 | Phase 1 · M1.3–M1.6 | Hello build, multi-project, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 
@@ -109,14 +109,14 @@ The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocod
 
 Before Gradle runs, the same workflow builds PRoot, its loader, talloc and libandroid-shmem from pinned sources with NDK r28 and replaces the four debug libraries in the runner. The step fails if any `PT_LOAD` segment is not 16-KB aligned. Sources, flags and checks are in [`tools/m1_2/BUILD.md`](tools/m1_2/BUILD.md); the report and the built libraries are uploaded as the `proot-ndk-r28` artifact.
 
-The Phase 1 toolchain pack is built separately by [`.github/workflows/android-toolchain.yml`](../.github/workflows/android-toolchain.yml). It boots the pinned arm64 Debian rootfs under qemu-user, installs JDK 17, Gradle 8.14.3, Android platforms 35/36 and build-tools 35.0.0, runs a real `aapt2` link plus `zipalign`/`apksigner`, and uploads `rootfs.tar.zst`, `manifest.json`, `SHA256SUMS` and the reports as `android-toolchain-pack`. It is not published as a release yet; the workflow artifact is the current source.
+The Phase 1 toolchain pack is built separately by [`.github/workflows/android-toolchain.yml`](../.github/workflows/android-toolchain.yml). It boots the pinned arm64 Debian rootfs under qemu-user, installs JDK 17, Gradle 8.14.3, Android platforms 35/36 and build-tools 35.0.0, runs a real `aapt2` link plus `zipalign`/`apksigner`, and uploads `rootfs.tar.zst`, `manifest.json`, `SHA256SUMS` and the reports as `android-toolchain-pack`. Lauf #7 (`41753569571`, Commit `32cd48b72c`, 2026-11-04) baute den Pack erfolgreich: `rootfs.tar.zst` misst 391.181.389 Bytes (SHA-256 `476382dbb4201eaecb4342017ad882e08bef28b2111a14bf35199b75273a71da`), entpackt 969.199.467 Bytes. Das Manifest meldet 938 ELF-Dateien, 544 Required mit `required_align=0x4000`, keine falsche Architektur und sechs statische Build-Tools bei `0x1000` als dokumentierte Ausnahme. Die Gast-Tests bestanden: JDK 17.0.21, Gradle 8.14.3 (JVM 17.0.21), `aapt2 link` gegen API 36, `zipalign -P 16` und `apksigner verify`; der CA-Truststore hat 148 Einträge. Der Pack ist ein Archiv, nicht komponentenweise; er ist noch nicht als Release veröffentlicht.
 
 Local builds of this app are not part of the workflow. Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
 
 ## Branching
 
 - `main` is the integration branch and is not pushed to directly.
-- Every change runs on `android/<topic>`, for example `android/m1.2-proot-ndk`.
+- Every change runs on `android/<topic>`, for example `android/m1.2-toolchain`.
 - Pushes name the target branch explicitly.
 - The README is updated in the same commit as the change that moves the project state.
 
@@ -147,7 +147,7 @@ The device run on 2026-11-03 with `0.1.18` returned **GO**: 12 of 12 checks pass
 
 The pack is assembled in CI from the same pinned rootfs and the tool versions in the Phase 1 decisions. It contains Debian 12 bookworm arm64, OpenJDK 17, Gradle 8.14.3, `android.jar` 35 and 36, build-tools 35.0.0 with static `aapt2`/`zipalign`, `apksigner`/`d8`, a debug keystore and the PRoot libraries. The guest test links a minimal resource with `aapt2` against API 36, aligns and signs the APK, and verifies it with `apksigner`.
 
-The hard 16-KB gate covers every shared library and the four PRoot libraries. The pinned static `aapt2` and `zipalign` from `android-sdk-tools` 35.0.2 are 4-KB aligned; they are static guest executables executed through PRoot, not libraries loaded by the Android linker, and are recorded as a documented exception in the manifest. If the acceptance requires 16 KB for them too, a dedicated AOSP/ReVanced build is the fallback. Details and pins are in [`tools/m1_2/BUILD.md`](tools/m1_2/BUILD.md).
+The hard 16-KB gate covers every shared library and the four PRoot libraries. The pinned static build-tools from `android-sdk-tools` 35.0.2 — `aapt`, `aapt2`, `aidl`, `dexdump`, `split-select` and `zipalign` — are 4-KB aligned; they are static guest executables executed through PRoot, not libraries loaded by the Android linker, and the six are recorded as a documented exception in the manifest. If the acceptance requires 16 KB for them too, dedicated AOSP/ReVanced builds are the fallback. Details and pins are in [`tools/m1_2/BUILD.md`](tools/m1_2/BUILD.md).
 
 ### Test fixtures
 
@@ -301,6 +301,6 @@ android/
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | in progress: PRoot verified; pack build in CI |
+| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | pack done: PRoot and arm64 pack verified; release publication open |
 | Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
