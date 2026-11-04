@@ -64,6 +64,7 @@ log "install static aarch64 build tools"
 unzip -q "$INPUT/sdk-tools.zip" -d /tmp/sdk-tools
 cp -a /tmp/sdk-tools/build-tools/. "$BT"/
 chmod 0755 "$BT"/*
+chmod -R a+rX "$SDK"
 
 log "install apksigner and d8 from build-tools 35.0.0"
 rm -rf /tmp/build-tools
@@ -112,7 +113,7 @@ JAVA_OUT=$(java -version 2>&1 || true)
 record JAVA_VERSION "$(printf '%s\n' "$JAVA_OUT" | head -1)"
 GRADLE_OUT=$(gradle --version 2>&1)
 record GRADLE_VERSION "$(printf '%s\n' "$GRADLE_OUT" | awk '/^Gradle /{print $2; exit}')"
-record GRADLE_JVM "$(printf '%s\n' "$GRADLE_OUT" | awk '/^JVM/{print $2; exit}')"
+record GRADLE_JVM "$(printf '%s\n' "$GRADLE_OUT" | sed -n 's/^Launcher JVM: *//p' | head -1)"
 AAPT2_OUT=$("$BT/aapt2" version 2>&1 || true)
 record AAPT2_VERSION "$(printf '%s\n' "$AAPT2_OUT" | head -1)"
 ZIPALIGN_OUT=$("$BT/zipalign" 2>&1 || true)
