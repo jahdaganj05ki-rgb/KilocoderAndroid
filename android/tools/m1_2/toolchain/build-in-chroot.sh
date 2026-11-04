@@ -112,10 +112,10 @@ JAVA_OUT=$(java -version 2>&1 || true)
 record JAVA_VERSION "$(printf '%s\n' "$JAVA_OUT" | head -1)"
 GRADLE_OUT=$(gradle --version 2>&1)
 record GRADLE_VERSION "$(printf '%s\n' "$GRADLE_OUT" | awk '/^Gradle /{print $2; exit}')"
-record GRADLE_JVM "$(printf '%s\n' "$GRADLE_OUT" | awk '/^JVM /{print $2; exit}')"
+record GRADLE_JVM "$(printf '%s\n' "$GRADLE_OUT" | awk '/^JVM/{print $2; exit}')"
 AAPT2_OUT=$("$BT/aapt2" version 2>&1 || true)
 record AAPT2_VERSION "$(printf '%s\n' "$AAPT2_OUT" | head -1)"
-ZIPALIGN_OUT=$("$BT/zipalign" -h 2>&1 || true)
+ZIPALIGN_OUT=$("$BT/zipalign" 2>&1 || true)
 record ZIPALIGN_USAGE "$(printf '%s\n' "$ZIPALIGN_OUT" | head -1)"
 APKSIGNER_OUT=$("$BT/apksigner" version 2>&1 || true)
 record APKSIGNER_VERSION "$(printf '%s\n' "$APKSIGNER_OUT" | head -1)"
@@ -182,4 +182,5 @@ cp badging.txt zipalign-*.txt apksigner-verify.txt "$EVIDENCE"/
 log "cleanup"
 apt-get clean
 rm -rf /var/lib/apt/lists/* "$INPUT" /tmp/platform-* /tmp/sdk-tools /tmp/build-tools /tmp/aapt2-test
+rm -rf /root/.gradle/native /root/.gradle/caches /root/.gradle/daemon /root/.gradle/workers
 record DONE ok
