@@ -70,6 +70,11 @@ aapt2, zipalign und apksigner.
 | Android Platform | 35 (`platform-35_r02.zip`) und 36 (`platform-36_r02.zip`) |
 | Build-Tools | 35.0.0, `aapt2`/`zipalign` statisch aus `android-sdk-tools` 35.0.2 |
 | Java-Tools | `apksigner`/`d8` aus Build-Tools 35.0.0 |
+| Keyring | `debian-archive-keyring` 2023.3+deb12u2, SHA-256 `f699e2f8…b4b8` |
+
+Das Rootfs von 2024 kennt den aktuellen bookworm-Signaturschlüssel nicht;
+vor `apt-get update` wird deshalb das gepinnte Keyring-Paket per `dpkg -i`
+installiert. Ohne diesen Schritt bricht apt mit `InRelease is not signed` ab.
 
 Im Gast liegen die Platform-JARs unter `/opt/android-sdk/platforms/android-35`
 und `android-36`, die Tools unter `/opt/android-sdk/build-tools/35.0.0`,

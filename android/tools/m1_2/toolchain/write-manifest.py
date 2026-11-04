@@ -53,6 +53,7 @@ def main() -> None:
                 "36": pin("PLATFORM_36"),
             },
             "build_tools": {"version": "35.0.0", **pin("BUILD_TOOLS")},
+            "keyring": {"version": env.get("KEYRING_VERSION", ""), **pin("KEYRING")},
             "aapt2": {
                 "version": env.get("AAPT2_VERSION", ""),
                 "source": "android-sdk-tools 35.0.2, static aarch64",

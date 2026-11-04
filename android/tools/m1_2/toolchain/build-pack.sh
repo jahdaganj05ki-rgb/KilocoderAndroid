@@ -38,6 +38,10 @@ BUILD_TOOLS_URL="https://dl.google.com/android/repository/build-tools_r35_linux.
 BUILD_TOOLS_SHA="bd3a4966912eb8b30ed0d00b0cda6b6543b949d5ffe00bea54c04c81e1561d88"
 BUILD_TOOLS_SIZE="61958799"
 
+KEYRING_URL="https://deb.debian.org/debian/pool/main/d/debian-archive-keyring/debian-archive-keyring_2023.3+deb12u2_all.deb"
+KEYRING_SHA="f699e2f88dca05212f2a452b58475f2993cb6993dfbafb1d0205a3291eb8b4b8"
+KEYRING_SIZE="178572"
+
 log() { printf '\n== %s ==\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
@@ -88,6 +92,7 @@ fetch "$PLATFORM_35_URL" "$PLATFORM_35_SHA" "$PLATFORM_35_SIZE" "$DL/platform-35
 fetch "$PLATFORM_36_URL" "$PLATFORM_36_SHA" "$PLATFORM_36_SIZE" "$DL/platform-36.zip"
 fetch "$SDK_TOOLS_URL" "$SDK_TOOLS_SHA" "$SDK_TOOLS_SIZE" "$DL/sdk-tools.zip"
 fetch "$BUILD_TOOLS_URL" "$BUILD_TOOLS_SHA" "$BUILD_TOOLS_SIZE" "$DL/build-tools.zip"
+fetch "$KEYRING_URL" "$KEYRING_SHA" "$KEYRING_SIZE" "$DL/debian-archive-keyring.deb"
 
 if [ ! -d "$ROOT" ]; then
     log "extract rootfs"
@@ -121,7 +126,7 @@ sudo mount --bind /dev "$ROOT/dev"
 sudo mount --bind /dev/pts "$ROOT/dev/pts"
 
 mkdir -p "$OUT" "$ROOT/tmp/toolchain-input" "$ROOT/opt/kilocoder"
-sudo cp "$DL"/*.zip "$ROOT/tmp/toolchain-input/"
+sudo cp "$DL"/*.zip "$DL/debian-archive-keyring.deb" "$ROOT/tmp/toolchain-input/"
 sudo install -m 0755 "$SELF/build-in-chroot.sh" "$ROOT/tmp/toolchain-input/build-in-chroot.sh"
 sudo rm -f "$ROOT/etc/resolv.conf"
 printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\noptions timeout:2 attempts:2\n' |
@@ -178,6 +183,7 @@ export PLATFORM_35_URL PLATFORM_35_SHA PLATFORM_35_SIZE
 export PLATFORM_36_URL PLATFORM_36_SHA PLATFORM_36_SIZE
 export SDK_TOOLS_URL SDK_TOOLS_SHA SDK_TOOLS_SIZE
 export BUILD_TOOLS_URL BUILD_TOOLS_SHA BUILD_TOOLS_SIZE
+export KEYRING_URL KEYRING_SHA KEYRING_SIZE
 
 python3 "$SELF/write-manifest.py" \
     "$OUT" "$VERSION" "$UNPACKED" "$ROOTFS_TAR_SHA" "$ROOTFS_TAR_SIZE"

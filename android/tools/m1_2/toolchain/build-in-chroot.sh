@@ -28,6 +28,10 @@ record() {
     printf '%s=%s\n' "$key" "$value" >>"$ENVF"
 }
 
+log "install current Debian archive keyring"
+dpkg -i /tmp/toolchain-input/debian-archive-keyring.deb
+record KEYRING_VERSION "$(dpkg-query -W -f='${Version}' debian-archive-keyring)"
+
 log "apt update and full-upgrade"
 apt-get -y update
 apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade
