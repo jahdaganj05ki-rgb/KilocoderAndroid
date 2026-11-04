@@ -14,7 +14,7 @@ This directory contains M0–M3 and Phase 1 through the M1.1 GO and the M1.2 PRo
 | M3 | GitHub PAT, push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Own PRoot NDK r28 build in CI, 16-KB ELF check, toolchain pack | in progress: own build verified on device; pack open |
+| Phase 1 · M1.2 | Own PRoot NDK r28 build in CI, 16-KB ELF check, toolchain pack | in progress: PRoot verified on device; toolchain pack build in CI |
 | Phase 1 · M1.3–M1.6 | Hello build, multi-project, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |
 
@@ -109,6 +109,8 @@ The workflow uploads `app/build/outputs/apk/debug/app-debug.apk` as the `kilocod
 
 Before Gradle runs, the same workflow builds PRoot, its loader, talloc and libandroid-shmem from pinned sources with NDK r28 and replaces the four debug libraries in the runner. The step fails if any `PT_LOAD` segment is not 16-KB aligned. Sources, flags and checks are in [`tools/m1_2/BUILD.md`](tools/m1_2/BUILD.md); the report and the built libraries are uploaded as the `proot-ndk-r28` artifact.
 
+The Phase 1 toolchain pack is built separately by [`.github/workflows/android-toolchain.yml`](../.github/workflows/android-toolchain.yml). It boots the pinned arm64 Debian rootfs under qemu-user, installs JDK 17, Gradle 8.14.3, Android platforms 35/36 and build-tools 35.0.0, runs a real `aapt2` link plus `zipalign`/`apksigner`, and uploads `rootfs.tar.zst`, `manifest.json`, `SHA256SUMS` and the reports as `android-toolchain-pack`. It is not published as a release yet; the workflow artifact is the current source.
+
 Local builds of this app are not part of the workflow. Static checks that need no Android toolchain still run locally: Markdown table padding, XML/TOML syntax, `git diff --check`, and `readelf` on checked-in binaries.
 
 ## Branching
@@ -140,6 +142,12 @@ Decisions are recorded in [`PHASE1_M1_0_DECISIONS.md`](PHASE1_M1_0_DECISIONS.md)
 The PRoot binaries (PRoot, loader, talloc, android-shmem) are pinned Termux packages with recorded SHA-256 hashes; [`tools/m1_1/BINARIES.md`](tools/m1_1/BINARIES.md) documents provenance, the private `libtalloc.so.2` copy used to satisfy the SONAME, and the GPL-2.0 note. Since M1.2, CI replaces them with an own NDK r28 build from pinned sources.
 
 The device run on 2026-11-03 with `0.1.18` returned **GO**: 12 of 12 checks passed on the Moto G84 (Android 15, API 35, `targetSdk 36`, PAGE_SIZE 4096), including the guest commands, exit-code propagation, cancellation and `java -version`. A second run with the own NDK r28 build also returned GO (12/12); the on-device ELF check reported `align=0x4000` for all four libraries. The 16-KB check is static only; a runtime test remains in Phase 2. Install steps, expected output and failure modes are in [`PHASE1_M1_1_RUNBOOK.md`](PHASE1_M1_1_RUNBOOK.md). The release APK never contains the smoke activity or the PRoot libraries.
+
+### M1.2 toolchain pack
+
+The pack is assembled in CI from the same pinned rootfs and the tool versions in the Phase 1 decisions. It contains Debian 12 bookworm arm64, OpenJDK 17, Gradle 8.14.3, `android.jar` 35 and 36, build-tools 35.0.0 with static `aapt2`/`zipalign`, `apksigner`/`d8`, a debug keystore and the PRoot libraries. The guest test links a minimal resource with `aapt2` against API 36, aligns and signs the APK, and verifies it with `apksigner`.
+
+The hard 16-KB gate covers every shared library and the four PRoot libraries. The pinned static `aapt2` and `zipalign` from `android-sdk-tools` 35.0.2 are 4-KB aligned; they are static guest executables executed through PRoot, not libraries loaded by the Android linker, and are recorded as a documented exception in the manifest. If the acceptance requires 16 KB for them too, a dedicated AOSP/ReVanced build is the fallback. Details and pins are in [`tools/m1_2/BUILD.md`](tools/m1_2/BUILD.md).
 
 ### Test fixtures
 
@@ -263,9 +271,11 @@ android/
   app/src/main/res/            Strings (en/de), launcher icon, platform theme
   test-fixtures/               hello-local-build and generic-sdk35
   tools/m1_1/BINARIES.md       provenance and hashes of the Termux reference binaries
-  tools/m1_2/BUILD.md          own PRoot NDK r28 build, pins and 16-KB checks
+  tools/m1_2/BUILD.md          own PRoot NDK r28 build, toolchain pack, pins and 16-KB checks
   tools/m1_2/build-proot.sh    CI build script for PRoot, loader, talloc, shmem
+  tools/m1_2/toolchain/        host and guest scripts for the arm64 toolchain pack
   .github/workflows/android.yml  CI build at the repository root
+  .github/workflows/android-toolchain.yml  arm64 toolchain pack, qemu-user
   .github/workflows/android-m3-e2e.yml  manual live GitHub E2E
 ```
 
@@ -291,6 +301,6 @@ android/
 | M3 | GitHub PAT, workspace push, Actions dispatch, logs, artifact install | done |
 | Phase 1 · M1.0 | Decisions, fixtures, project criteria, M1.1 acceptance | done |
 | Phase 1 · M1.1 | PRoot smoke test on the Moto G84 | done on the Moto G84 (Android 15); 16-KB runtime in Phase 2 |
-| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | in progress: own PRoot build device-verified; pack open |
+| Phase 1 · M1.2 | Toolchain pack with JDK 17, Gradle 8.14.3, SDK 35/36, static aarch64 tools | in progress: PRoot verified; pack build in CI |
 | Phase 1 · M1.3–M1.6 | Hello-world build, three-project matrix, app integration, hardening | planned |
 | M4 | German/English polish, self-update, rollback, release signing | open |

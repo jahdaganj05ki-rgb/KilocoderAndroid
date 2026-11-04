@@ -50,10 +50,52 @@ einschränken.
 Die vier Ausgabedateien behalten die Namen aus M1.1. `ProotEngine` und der
 Smoke-Test brauchen keine Änderung.
 
+## Toolchain-Pack
+
+Den Phase-1-Pack baut `.github/workflows/android-toolchain.yml`, nie ein
+lokaler Rechner. Der Workflow läuft bei Änderungen unter
+`android/tools/m1_2/toolchain/**` und per `workflow_dispatch`.
+`toolchain/build-pack.sh` lädt die gepinnten Quellen, startet das arm64-Rootfs
+mit qemu-user und ruft `toolchain/build-in-chroot.sh` auf; `check-elf.py` prüft
+die ELF-Ausrichtung, `write-manifest.py` schreibt den Bericht. Das Artefakt
+`android-toolchain-pack` enthält `rootfs.tar.zst`, `manifest.json`,
+`SHA256SUMS`, die ELF-Berichte, `toolchain-report.txt` und die Protokolle von
+aapt2, zipalign und apksigner.
+
+| Komponente | Pin |
+|---|---|
+| Basis | Debian 12 bookworm arm64, proot-distro v4.7.0, SHA-256 `4baa3228…b8df8` |
+| JDK | Debian `openjdk-17-jdk-headless`, nach `apt-get full-upgrade` |
+| Gradle | 8.14.3, SHA-256 `bd711022…f3531` |
+| Android Platform | 35 (`platform-35_r02.zip`) und 36 (`platform-36_r02.zip`) |
+| Build-Tools | 35.0.0, `aapt2`/`zipalign` statisch aus `android-sdk-tools` 35.0.2 |
+| Java-Tools | `apksigner`/`d8` aus Build-Tools 35.0.0 |
+
+Im Gast liegen die Platform-JARs unter `/opt/android-sdk/platforms/android-35`
+und `android-36`, die Tools unter `/opt/android-sdk/build-tools/35.0.0`,
+Gradle unter `/opt/gradle/gradle-8.14.3`. `/etc/profile.d/kilocoder-toolchain.sh`
+setzt `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT` und `PATH`;
+`/root/.gradle/gradle.properties` setzt `android.aapt2FromMavenOverride`.
+Der Debug-Keystore liegt unter `/root/.android/debug.keystore`.
+
+Der Gast-Test linkt mit `aapt2` eine minimale Ressource gegen `android.jar` 36,
+aligniert mit `zipalign`, signiert mit dem Debug-Key und prüft mit
+`apksigner verify`. Dazu kommen `java -version`, `gradle --version`, der
+CA-Bundle und der Java-Truststore.
+
+**16-KB-Befund:** Die statischen `aapt2` und `zipalign` aus 35.0.2 haben
+`PT_LOAD`-Alignment `0x1000` (4 KB), nicht `0x4000`. Sie werden als
+Guest-Executables unter PRoot gestartet und nicht vom Android-Linker geladen;
+der harte Gate gilt deshalb für alle Shared Libraries und die vier
+PRoot-Bibliotheken. Die beiden Tools stehen im Manifest als dokumentierte
+Ausnahme. Wenn die Abnahme 16 KB auch für sie verlangt, ist der Fallback ein
+eigener 16-KB-Build aus AOSP/ReVanced (aapt2) und ein eigener zipalign-Build.
+
 ## Grenzen
 
-- Der Build läuft ausschließlich in `.github/workflows/android.yml`; lokal ist
-  er laut `android/AGENTS.md` nicht erlaubt.
+- Der PRoot-Build läuft ausschließlich in `.github/workflows/android.yml`, der
+  Toolchain-Pack in `.github/workflows/android-toolchain.yml`; lokal sind beide
+  laut `android/AGENTS.md` nicht erlaubt.
 - Die eingecheckten `.so`-Dateien bleiben die M1.1-Termux-Kopien als Referenz.
   CI überschreibt sie im Runner vor `:app:assembleDebug`; das ausgelieferte
   APK enthält damit den NDK-Build.

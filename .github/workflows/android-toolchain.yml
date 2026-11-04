@@ -1,0 +1,64 @@
+# kilocode_change - new file
+name: android-toolchain
+
+on:
+  push:
+    paths:
+      - "android/tools/m1_2/toolchain/**"
+      - ".github/workflows/android-toolchain.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-toolchain-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  pack:
+    name: build arm64 toolchain pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Free disk space
+        run: |
+          set -euo pipefail
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Build toolchain pack
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/kilocoder-toolchain/out"
+          bash android/tools/m1_2/toolchain/build-pack.sh 2>&1 |
+            tee "$RUNNER_TEMP/kilocoder-toolchain/build.log"
+
+      - name: Upload toolchain pack
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-toolchain-pack
+          path: |
+            ${{ runner.temp }}/kilocoder-toolchain/out/
+            ${{ runner.temp }}/kilocoder-toolchain/build.log
+            ${{ runner.temp }}/kilocoder-toolchain/chroot.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Job summary
+        if: always()
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/kilocoder-toolchain/out"
+          {
+            echo "### Android toolchain pack"
+            echo ""
+            python3 android/tools/m1_2/toolchain/job-summary.py "$out"
+          } >> "$GITHUB_STEP_SUMMARY"

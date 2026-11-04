@@ -531,7 +531,7 @@ Status: **GO am 2026-11-03 auf dem Moto G84.** Der Lauf mit `0.1.18` bestand 12 
 
 ### M1.2 — Toolchain-Pack (3–5 Tage)
 
-Status: **gestartet am 2026-11-03.** PRoot, Loader, talloc und libandroid-shmem baut der Android-Workflow mit NDK r28 aus gepinnten Quellen und prüft sie statisch auf 16 KB ([tools/m1_2/BUILD.md](tools/m1_2/BUILD.md)). Der M1.1-Smoke-Test bestand mit diesem Build auf dem Moto G84 erneut 12 von 12, inklusive ELF-Check mit `align=0x4000` für alle vier Bibliotheken. Der eigentliche Toolchain-Pack ist noch offen.
+Status: **gestartet am 2026-11-03.** PRoot, Loader, talloc und libandroid-shmem baut der Android-Workflow mit NDK r28 aus gepinnten Quellen und prüft sie statisch auf 16 KB ([tools/m1_2/BUILD.md](tools/m1_2/BUILD.md)). Der M1.1-Smoke-Test bestand mit diesem Build auf dem Moto G84 erneut 12 von 12, inklusive ELF-Check mit `align=0x4000` für alle vier Bibliotheken. Der Pack-Build ist inzwischen als eigener CI-Job angelegt (`.github/workflows/android-toolchain.yml`, qemu-user, Artefakt `android-toolchain-pack`); der erste Lauf und die Abnahme stehen noch aus. Die statischen `aapt2`/`zipalign` aus `android-sdk-tools` 35.0.2 sind 4-KB-ausgerichtet; der harte Gate prüft Shared Libraries und PRoot/loader, die beiden Tools sind als dokumentierte Ausnahme im Manifest. Ob die Abnahme 16 KB auch für sie verlangt, ist offen; Fallback ist ein eigener AOSP-/ReVanced-Build.
 
 - [x] PRoot, Loader, talloc und libandroid-shmem mit NDK r28 bauen und statisch auf 16 KB prüfen.
 - [ ] Debian-Rootfs als `tar.zst` mit JDK 17, Gradle 8.14.3, SDK 35/36 und statischen Build-Tools bestücken.

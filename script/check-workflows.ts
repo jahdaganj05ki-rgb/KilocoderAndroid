@@ -28,6 +28,7 @@ const DIR = path.join(ROOT, ".github", "workflows")
 // Workflows we have deliberately accepted into CI. Sort alphabetically.
 const active = new Set([
   "android-m3-e2e.yml",
+  "android-toolchain.yml",
   "android.yml",
   "auto-docs.yml",
   "beta.yml",
