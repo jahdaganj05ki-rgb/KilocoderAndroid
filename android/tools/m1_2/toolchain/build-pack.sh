@@ -72,14 +72,11 @@ fetch() {
 }
 
 log "host prerequisites"
-sudo apt-get update -qq
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-    qemu-user-static zstd unzip python3 >/dev/null
+for tool in curl tar xz zstd unzip python3 docker; do
+    command -v "$tool" >/dev/null 2>&1 || die "missing host tool: $tool"
+done
 
 if [ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]; then
-    sudo systemctl restart systemd-binfmt 2>/dev/null || true
-fi
-if [ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ] && command -v docker >/dev/null 2>&1; then
     log "register arm64 binfmt"
     docker run --privileged --rm tonistiigi/binfmt --install arm64
 fi
@@ -126,7 +123,6 @@ sudo mount --bind /dev/pts "$ROOT/dev/pts"
 mkdir -p "$OUT" "$ROOT/tmp/toolchain-input" "$ROOT/opt/kilocoder"
 sudo cp "$DL"/*.zip "$ROOT/tmp/toolchain-input/"
 sudo install -m 0755 "$SELF/build-in-chroot.sh" "$ROOT/tmp/toolchain-input/build-in-chroot.sh"
-sudo install -m 0755 /usr/bin/qemu-aarch64-static "$ROOT/usr/bin/qemu-aarch64-static" 2>/dev/null || true
 sudo rm -f "$ROOT/etc/resolv.conf"
 printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\noptions timeout:2 attempts:2\n' |
     sudo tee "$ROOT/etc/resolv.conf" >/dev/null

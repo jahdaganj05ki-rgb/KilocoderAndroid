@@ -40,6 +40,30 @@ jobs:
           bash android/tools/m1_2/toolchain/build-pack.sh 2>&1 |
             tee "$RUNNER_TEMP/kilocoder-toolchain/build.log"
 
+      - name: Failure diagnostics
+        if: failure()
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/kilocoder-toolchain/build.log"
+          if [ -f "$log" ]; then
+            {
+              echo "### Toolchain build failed"
+              echo '```'
+              tail -n 40 "$log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=Toolchain build failed::$(tail -n 1 "$log" | cut -c1-200)"
+          fi
+          chroot_log="$RUNNER_TEMP/kilocoder-toolchain/chroot.log"
+          if [ -f "$chroot_log" ]; then
+            {
+              echo "### Guest log tail"
+              echo '```'
+              tail -n 20 "$chroot_log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Upload toolchain pack
         if: always()
         uses: actions/upload-artifact@v7
