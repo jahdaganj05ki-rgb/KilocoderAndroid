@@ -96,7 +96,9 @@ if [ ! -d "$ROOT" ]; then
     log "extract rootfs"
     rm -rf "$WORK/rootfs-extract"
     mkdir -p "$WORK/rootfs-extract"
-    tar --no-same-owner -xJf "$DL/rootfs.tar.xz" -C "$WORK/rootfs-extract"
+    # The proot-distro archive contains /dev device nodes. The runner user
+    # cannot mknod them, and the chroot later bind-mounts the host /dev anyway.
+    tar --no-same-owner --exclude='*/dev/*' -xJf "$DL/rootfs.tar.xz" -C "$WORK/rootfs-extract"
     mapfile -t top < <(find "$WORK/rootfs-extract" -mindepth 1 -maxdepth 1 -printf '%f\n')
     if [ "${#top[@]}" -eq 1 ] && [ -d "$WORK/rootfs-extract/${top[0]}" ]; then
         mv "$WORK/rootfs-extract/${top[0]}" "$ROOT"
